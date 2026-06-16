@@ -12,18 +12,21 @@ export default function HomePage() {
         </div>
         <div className="flex flex-col gap-3">
           <Link
-            href="/login"
-            className="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+            href="/demo"
+            className="w-full py-3.5 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md"
           >
-            はじめる
+            今すぐARを体験する（登録不要）
           </Link>
           <Link
-            href="/dashboard"
+            href="/login"
             className="w-full py-3 px-4 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-100 transition-colors"
           >
-            ダッシュボードへ
+            ログイン / 新規登録
           </Link>
         </div>
+        <p className="text-xs text-gray-400">
+          登録すると計測データを保存・AI提案が利用できます
+        </p>
       </div>
     </main>
   );

@@ -2,168 +2,158 @@
 
 import { useEffect, useRef, useState } from "react"
 
-type Phase = "init" | "scanning" | "detected" | "error"
+const CORNER_LABELS = ["左前", "右前", "右奥", "左奥"]
+type Point = { x: number; y: number }
 
 export default function ARTestScene() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animRef = useRef<number>(0)
-  const [phase, setPhase] = useState<Phase>("init")
+  const [corners, setCorners] = useState<Point[]>([])
+  const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
+  // カメラ起動
   useEffect(() => {
-    let stopped = false
-
-    async function start() {
-      // カメラ取得
-      let stream: MediaStream
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false,
-        })
-      } catch {
-        setError("カメラへのアクセスが拒否されました。\nブラウザの設定を確認してください。")
-        setPhase("error")
-        return
-      }
-      if (stopped) { stream.getTracks().forEach(t => t.stop()); return }
-
-      const video = videoRef.current
-      if (!video) return
-      video.srcObject = stream
-      await video.play()
-
-      setPhase("scanning")
-
-      // 2秒後に「検出」
-      const timer = setTimeout(() => {
-        if (!stopped) setPhase("detected")
-      }, 2000)
-
-      // 2D Canvas でマーカー描画
-      const canvas = canvasRef.current
-      if (!canvas) return
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      let tick = 0
-
-      function draw() {
-        if (stopped || !ctx || !canvas) return
-        animRef.current = requestAnimationFrame(draw)
-        tick++
-
-        const w = canvas.width
-        const h = canvas.height
-
-        ctx.clearRect(0, 0, w, h)
-
-        if (phase !== "detected" && tick < 60) {
-          // まだ検出前 — スキャンラインだけ
-          const scanY = h * 0.5 + Math.sin(tick * 0.05) * h * 0.15
-          ctx.strokeStyle = "rgba(255,140,0,0.4)"
-          ctx.lineWidth = 1.5
-          ctx.beginPath()
-          ctx.moveTo(0, scanY)
-          ctx.lineTo(w, scanY)
-          ctx.stroke()
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      .then((stream) => {
+        streamRef.current = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play()
         }
+      })
+      .catch(() => setError("カメラへのアクセスが拒否されました"))
 
-        // 検出後 or 60フレーム経過 — 床面マーカーを描画
-        if (tick >= 60) {
-          drawFloorMarker(ctx, w, h, tick)
-        }
-      }
-
-      draw()
-
-      return () => {
-        clearTimeout(timer)
-        stream.getTracks().forEach(t => t.stop())
-      }
-    }
-
-    const cleanup = start()
-    return () => {
-      stopped = true
-      cancelAnimationFrame(animRef.current)
-      cleanup.then(fn => fn?.())
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => streamRef.current?.getTracks().forEach((t) => t.stop())
   }, [])
 
-  // phase が変わったら検出状態を canvas の描画に伝える別 effect
+  // Canvas リサイズ
   useEffect(() => {
-    if (phase !== "detected") return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    // detected フラグをデータ属性で共有
-    canvas.dataset.detected = "true"
-  }, [phase])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    function resize() {
-      if (!canvas) return
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+    const resize = () => {
+      const c = canvasRef.current
+      if (!c) return
+      c.width = c.offsetWidth
+      c.height = c.offsetHeight
+      redraw(corners, done, c)
     }
     resize()
     window.addEventListener("resize", resize)
     return () => window.removeEventListener("resize", resize)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // コーナーが変わるたびに再描画
+  useEffect(() => {
+    const c = canvasRef.current
+    if (c) redraw(corners, done, c)
+  }, [corners, done])
+
+  const handleTap = (e: React.TouchEvent<HTMLCanvasElement> | React.MouseEvent<HTMLCanvasElement>) => {
+    if (done) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const clientX = "touches" in e ? e.changedTouches[0].clientX : e.clientX
+    const clientY = "touches" in e ? e.changedTouches[0].clientY : e.clientY
+    const pt: Point = {
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height),
+    }
+
+    const next = [...corners, pt]
+    if (next.length === 4) setDone(true)
+    setCorners(next)
+  }
+
+  const reset = () => {
+    setCorners([])
+    setDone(false)
+  }
+
+  const nextLabel = corners.length < 4 ? CORNER_LABELS[corners.length] : null
+
   return (
-    <div className="relative overflow-hidden bg-black" style={{ width: "100vw", height: "100dvh" }}>
-      {/* カメラ映像 */}
+    <div
+      className="relative bg-black overflow-hidden"
+      style={{ width: "100vw", height: "100svh" }}
+    >
+      {/* カメラ映像 — object-contain でアスペクト比を保持 */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-contain"
         playsInline
         muted
         autoPlay
       />
 
-      {/* 2D オーバーレイ Canvas */}
+      {/* タップ・描画用 Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 pointer-events-none"
-        style={{ width: "100%", height: "100%" }}
+        className="absolute inset-0 w-full h-full"
+        style={{ touchAction: "none" }}
+        onTouchEnd={handleTap}
+        onClick={handleTap}
       />
 
       {/* ヘッダー */}
-      <div className="absolute top-safe-top left-0 right-0 flex justify-center pt-4 pointer-events-none">
+      <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none">
         <span className="bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-          AR検証モード（登録不要）
+          収納スペース計測（タップで計測）
         </span>
       </div>
 
-      {/* フェーズインジケーター */}
-      <div className="absolute bottom-10 left-0 right-0 flex justify-center pointer-events-none">
-        <div className="bg-black/60 text-white text-sm px-4 py-2 rounded-full flex items-center gap-2">
-          {phase === "scanning" && (
-            <span className="inline-block w-3 h-3 rounded-full bg-orange-400 animate-pulse" />
-          )}
-          {phase === "detected" && (
-            <span className="inline-block w-3 h-3 rounded-full bg-green-400" />
-          )}
-          <span>
-            {phase === "init" && "初期化中..."}
-            {phase === "scanning" && "スキャン中..."}
-            {phase === "detected" && "平面を検出しました"}
-            {phase === "error" && "エラー"}
-          </span>
+      {/* 指示バナー */}
+      {!done && (
+        <div className="absolute top-14 inset-x-0 flex justify-center pointer-events-none">
+          <div className="bg-blue-600/90 text-white text-base font-semibold px-5 py-2.5 rounded-2xl shadow-lg">
+            {nextLabel}をタップ（{corners.length + 1} / 4）
+          </div>
         </div>
+      )}
+
+      {/* コーナー達成インジケーター */}
+      <div className="absolute top-28 inset-x-0 flex justify-center gap-2 pointer-events-none">
+        {CORNER_LABELS.map((label, i) => (
+          <div
+            key={label}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+              i < corners.length ? "bg-green-500 text-white scale-110" : "bg-white/30 text-white"
+            }`}
+          >
+            {i + 1}
+          </div>
+        ))}
       </div>
+
+      {/* 完了バナー */}
+      {done && (
+        <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-6 shadow-2xl">
+          <h2 className="text-lg font-bold text-gray-900 mb-1">枠組み完成！</h2>
+          <p className="text-sm text-gray-500 mb-4">4コーナーをマーキングしました</p>
+          <div className="flex gap-3">
+            <button
+              onClick={reset}
+              className="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium"
+            >
+              やり直す
+            </button>
+            <button
+              onClick={() => alert("この枠でAI計測へ送信（未実装）")}
+              className="flex-1 py-3 bg-blue-600 rounded-xl text-white font-medium"
+            >
+              この枠で計測
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* エラー */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center p-6">
-          <div className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs whitespace-pre-line">
-            <p className="text-red-400 font-bold mb-2">カメラエラー</p>
+          <div className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs">
+            <p className="text-red-400 font-bold mb-2">エラー</p>
             <p>{error}</p>
           </div>
         </div>
@@ -172,71 +162,57 @@ export default function ARTestScene() {
   )
 }
 
-// 遠近感のある床面マーカーを Canvas 2D で描画
-function drawFloorMarker(ctx: CanvasRenderingContext2D, w: number, h: number, tick: number) {
-  // 台形（遠近感のある床面矩形）の頂点を定義
-  const cx = w * 0.5               // 中心X
-  const horizonY = h * 0.52        // 地平線Y（画面中央よりやや下）
-  const nearY = h * 0.82           // 手前の辺のY
-  const nearHalf = w * 0.32        // 手前の辺の幅の半分
-  const farHalf = w * 0.12         // 奥の辺の幅の半分
+// Canvas 2D 描画
+function redraw(corners: Point[], done: boolean, canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-  // 呼吸アニメーション
-  const breathe = 1 + Math.sin(tick * 0.04) * 0.015
+  if (corners.length === 0) return
 
-  const tl = { x: cx - farHalf * breathe,  y: horizonY }
-  const tr = { x: cx + farHalf * breathe,  y: horizonY }
-  const br = { x: cx + nearHalf * breathe, y: nearY }
-  const bl = { x: cx - nearHalf * breathe, y: nearY }
-
-  // 半透明オレンジ塗り
+  // 打ったコーナーをつなぐ線
   ctx.beginPath()
-  ctx.moveTo(tl.x, tl.y)
-  ctx.lineTo(tr.x, tr.y)
-  ctx.lineTo(br.x, br.y)
-  ctx.lineTo(bl.x, bl.y)
-  ctx.closePath()
-  ctx.fillStyle = "rgba(255, 140, 0, 0.35)"
-  ctx.fill()
-
-  // オレンジ枠線
-  ctx.strokeStyle = "rgba(255, 120, 0, 0.9)"
+  corners.forEach((pt, i) => {
+    if (i === 0) ctx.moveTo(pt.x, pt.y)
+    else ctx.lineTo(pt.x, pt.y)
+  })
+  if (done) ctx.closePath()
+  ctx.strokeStyle = done ? "rgba(255,140,0,0.95)" : "rgba(255,255,255,0.7)"
   ctx.lineWidth = 2.5
+  ctx.setLineDash(done ? [] : [8, 5])
   ctx.stroke()
+  ctx.setLineDash([])
 
-  // グリッド線（奥行き感）
-  ctx.strokeStyle = "rgba(255, 160, 0, 0.4)"
-  ctx.lineWidth = 1
-
-  // 縦方向の消失線 × 3本
-  for (let i = 1; i <= 3; i++) {
-    const t = i / 4
-    const topX = tl.x + (tr.x - tl.x) * t
-    const botX = bl.x + (br.x - bl.x) * t
+  // 塗り（完了時のみ）
+  if (done) {
     ctx.beginPath()
-    ctx.moveTo(topX, horizonY)
-    ctx.lineTo(botX, nearY)
-    ctx.stroke()
-  }
-
-  // 横方向の水平線 × 2本
-  for (let i = 1; i <= 2; i++) {
-    const t = i / 3
-    const lx = tl.x + (bl.x - tl.x) * t
-    const rx = tr.x + (br.x - tr.x) * t
-    const y  = horizonY + (nearY - horizonY) * t
-    ctx.beginPath()
-    ctx.moveTo(lx, y)
-    ctx.lineTo(rx, y)
-    ctx.stroke()
-  }
-
-  // 四隅のコーナーマーカー
-  const corners = [tl, tr, br, bl]
-  corners.forEach(pt => {
-    ctx.beginPath()
-    ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2)
-    ctx.fillStyle = "rgba(255, 200, 0, 0.95)"
+    corners.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.y)
+      else ctx.lineTo(pt.x, pt.y)
+    })
+    ctx.closePath()
+    ctx.fillStyle = "rgba(255,140,0,0.2)"
     ctx.fill()
+  }
+
+  // 各コーナーのドット + ラベル
+  corners.forEach((pt, i) => {
+    // ドット
+    ctx.beginPath()
+    ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2)
+    ctx.fillStyle = done ? "rgba(255,140,0,1)" : "rgba(255,255,255,0.95)"
+    ctx.fill()
+    ctx.strokeStyle = done ? "#cc6600" : "#999"
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+
+    // ラベル
+    ctx.font = "bold 13px sans-serif"
+    ctx.fillStyle = "white"
+    ctx.textAlign = "center"
+    ctx.shadowColor = "rgba(0,0,0,0.8)"
+    ctx.shadowBlur = 4
+    ctx.fillText(CORNER_LABELS[i], pt.x, pt.y - 14)
+    ctx.shadowBlur = 0
   })
 }

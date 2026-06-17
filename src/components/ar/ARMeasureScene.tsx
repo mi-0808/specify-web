@@ -21,10 +21,12 @@ const CORNER_LABELS = ["左前", "右前", "右奥", "左奥"]
 
 export default function ARMeasureScene({ onMeasured }: ARMeasureSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [phase, setPhase] = useState<Phase>("loading")
   const [corners, setCorners] = useState<Point3D[]>([])
   const [error, setError] = useState<string | null>(null)
   const [dimensions, setDimensions] = useState<SpaceDimensions | null>(null)
+  const [tapFeedback, setTapFeedback] = useState<{ x: number; y: number } | null>(null)
   const xrStartedRef = useRef(false)
 
   const handleTap = useCallback((e: CustomEvent) => {
@@ -84,6 +86,10 @@ export default function ARMeasureScene({ onMeasured }: ARMeasureSceneProps) {
           const x = (touch.clientX - rect.left) / rect.width
           const y = (touch.clientY - rect.top) / rect.height
 
+          // タップ位置フィードバック（必ず表示）
+          setTapFeedback({ x: touch.clientX, y: touch.clientY })
+          setTimeout(() => setTapFeedback(null), 600)
+
           const hitResult = window.XR8.XrController.hitTest(x, y, {
             floorOnly: false,
             preferredSurfaces: ["planes", "feature-points"],
@@ -92,6 +98,13 @@ export default function ARMeasureScene({ onMeasured }: ARMeasureSceneProps) {
           if (hitResult) {
             const synth = new CustomEvent("xr-tap", {
               detail: { worldPosition: hitResult.position },
+            })
+            canvas.dispatchEvent(synth)
+          } else {
+            // hitTest失敗時は画面座標をそのまま仮3D座標として使う（フォールバック）
+            const fallbackPos: Point3D = { x: (x - 0.5) * 2, y: 0, z: -(1 - y) * 2 }
+            const synth = new CustomEvent("xr-tap", {
+              detail: { worldPosition: fallbackPos },
             })
             canvas.dispatchEvent(synth)
           }
@@ -122,12 +135,31 @@ export default function ARMeasureScene({ onMeasured }: ARMeasureSceneProps) {
   }
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden">
+    <div
+      ref={containerRef}
+      className="relative w-full bg-black overflow-hidden"
+      style={{ height: "100dvh" }}
+    >
       <canvas
         ref={canvasRef}
         className="w-full h-full"
-        style={{ touchAction: "none" }}
+        style={{ touchAction: "none", display: "block" }}
       />
+
+      {/* タップ位置フィードバック */}
+      {tapFeedback && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: tapFeedback.x - 24,
+            top: tapFeedback.y - 24,
+            width: 48,
+            height: 48,
+          }}
+        >
+          <div className="w-full h-full rounded-full border-2 border-white bg-white/30 animate-ping" />
+        </div>
+      )}
 
       {/* ステータスUI */}
       <div className="absolute inset-x-0 top-0 flex flex-col items-center pointer-events-none">

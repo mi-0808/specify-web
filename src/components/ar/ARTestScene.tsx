@@ -2,43 +2,20 @@
 
 import { useEffect, useRef, useState } from "react"
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    THREE: any
-  }
-}
-
 type Phase = "init" | "scanning" | "detected" | "error"
 
 export default function ARTestScene() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animRef = useRef<number>(0)
   const [phase, setPhase] = useState<Phase>("init")
   const [error, setError] = useState<string | null>(null)
-  const animFrameRef = useRef<number>(0)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const threeRef = useRef<any>(null)
 
   useEffect(() => {
     let stopped = false
 
-    async function setup() {
-      // Three.js を CDN から動的ロード
-      if (!window.THREE) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement("script")
-          script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
-          script.onload = () => resolve()
-          script.onerror = () => reject(new Error("Three.js の読み込みに失敗しました"))
-          document.head.appendChild(script)
-        })
-      }
-      if (stopped) return
-
-      const THREE = window.THREE
-
-      // カメラ映像取得
+    async function start() {
+      // カメラ取得
       let stream: MediaStream
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -46,7 +23,7 @@ export default function ARTestScene() {
           audio: false,
         })
       } catch {
-        setError("カメラへのアクセスが拒否されました。ブラウザの設定を確認してください。")
+        setError("カメラへのアクセスが拒否されました。\nブラウザの設定を確認してください。")
         setPhase("error")
         return
       }
@@ -57,119 +34,90 @@ export default function ARTestScene() {
       video.srcObject = stream
       await video.play()
 
-      // Three.js セットアップ
-      const canvas = canvasRef.current
-      if (!canvas) return
-
-      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-      renderer.setPixelRatio(window.devicePixelRatio)
-      renderer.setSize(window.innerWidth, window.innerHeight)
-      renderer.setClearColor(0x000000, 0)
-
-      const scene = new THREE.Scene()
-      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100)
-      camera.position.set(0, 1.5, 0)
-
-      // 半透明オレンジ矩形マーカー
-      const geometry = new THREE.PlaneGeometry(0.6, 0.4)
-      const material = new THREE.MeshBasicMaterial({
-        color: 0xff8c00,
-        transparent: true,
-        opacity: 0.55,
-        side: THREE.DoubleSide,
-      })
-      const marker = new THREE.Mesh(geometry, material)
-      marker.rotation.x = -Math.PI / 2
-      marker.position.set(0, 0, -0.8)
-      scene.add(marker)
-
-      // 枠線
-      const edges = new THREE.EdgesGeometry(geometry)
-      const lineMat = new THREE.LineBasicMaterial({ color: 0xff6600, linewidth: 2 })
-      const wireframe = new THREE.LineSegments(edges, lineMat)
-      wireframe.rotation.x = -Math.PI / 2
-      wireframe.position.set(0, 0, -0.8)
-      scene.add(wireframe)
-
-      threeRef.current = { scene, camera, renderer, marker }
-
-      // DeviceOrientation 許可（iOS 13+）
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const DevOrEv = DeviceOrientationEvent as any
-      if (typeof DevOrEv.requestPermission === "function") {
-        try {
-          await DevOrEv.requestPermission()
-        } catch {
-          // 許可なしでも継続
-        }
-      }
-
-      const orient = { alpha: 0, beta: 0, gamma: 0 }
-      const handleOrientation = (e: DeviceOrientationEvent) => {
-        orient.alpha = e.alpha ?? 0
-        orient.beta = e.beta ?? 0
-        orient.gamma = e.gamma ?? 0
-      }
-      window.addEventListener("deviceorientation", handleOrientation)
-
       setPhase("scanning")
 
-      // スキャン中インジケーター → 2秒後に「検出」
+      // 2秒後に「検出」
       const timer = setTimeout(() => {
         if (!stopped) setPhase("detected")
       }, 2000)
 
-      const euler = new THREE.Euler() // eslint-disable-line @typescript-eslint/no-unsafe-call
-      const quaternion = new THREE.Quaternion()
+      // 2D Canvas でマーカー描画
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
 
-      function animate() {
-        if (stopped) return
-        animFrameRef.current = requestAnimationFrame(animate)
+      let tick = 0
 
-        // デバイス傾きをカメラに反映（簡易）
-        const beta = (orient.beta * Math.PI) / 180
-        const gamma = (orient.gamma * Math.PI) / 180
-        euler.set(beta - Math.PI / 2, 0, -gamma, "YXZ")
-        quaternion.setFromEuler(euler)
-        camera.quaternion.slerp(quaternion, 0.1)
+      function draw() {
+        if (stopped || !ctx || !canvas) return
+        animRef.current = requestAnimationFrame(draw)
+        tick++
 
-        renderer.render(scene, camera)
+        const w = canvas.width
+        const h = canvas.height
+
+        ctx.clearRect(0, 0, w, h)
+
+        if (phase !== "detected" && tick < 60) {
+          // まだ検出前 — スキャンラインだけ
+          const scanY = h * 0.5 + Math.sin(tick * 0.05) * h * 0.15
+          ctx.strokeStyle = "rgba(255,140,0,0.4)"
+          ctx.lineWidth = 1.5
+          ctx.beginPath()
+          ctx.moveTo(0, scanY)
+          ctx.lineTo(w, scanY)
+          ctx.stroke()
+        }
+
+        // 検出後 or 60フレーム経過 — 床面マーカーを描画
+        if (tick >= 60) {
+          drawFloorMarker(ctx, w, h, tick)
+        }
       }
-      animate()
 
-      const handleResize = () => {
-        renderer.setSize(window.innerWidth, window.innerHeight)
-        camera.aspect = window.innerWidth / window.innerHeight
-        camera.updateProjectionMatrix()
-      }
-      window.addEventListener("resize", handleResize)
+      draw()
 
       return () => {
         clearTimeout(timer)
-        window.removeEventListener("deviceorientation", handleOrientation)
-        window.removeEventListener("resize", handleResize)
         stream.getTracks().forEach(t => t.stop())
-        renderer.dispose()
       }
     }
 
-    const cleanup = setup()
+    const cleanup = start()
     return () => {
       stopped = true
-      cancelAnimationFrame(animFrameRef.current)
+      cancelAnimationFrame(animRef.current)
       cleanup.then(fn => fn?.())
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const phaseLabel: Record<Phase, string> = {
-    init: "初期化中...",
-    scanning: "スキャン中...",
-    detected: "平面を検出しました",
-    error: "エラー",
-  }
+  // phase が変わったら検出状態を canvas の描画に伝える別 effect
+  useEffect(() => {
+    if (phase !== "detected") return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    // detected フラグをデータ属性で共有
+    canvas.dataset.detected = "true"
+  }, [phase])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    function resize() {
+      if (!canvas) return
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+    }
+    resize()
+    window.addEventListener("resize", resize)
+    return () => window.removeEventListener("resize", resize)
+  }, [])
 
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
+    <div className="relative overflow-hidden bg-black" style={{ width: "100vw", height: "100dvh" }}>
       {/* カメラ映像 */}
       <video
         ref={videoRef}
@@ -179,14 +127,15 @@ export default function ARTestScene() {
         autoPlay
       />
 
-      {/* Three.js オーバーレイ */}
+      {/* 2D オーバーレイ Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
+        style={{ width: "100%", height: "100%" }}
       />
 
       {/* ヘッダー */}
-      <div className="absolute top-4 left-0 right-0 flex justify-center pointer-events-none">
+      <div className="absolute top-safe-top left-0 right-0 flex justify-center pt-4 pointer-events-none">
         <span className="bg-black/50 text-white text-xs px-3 py-1 rounded-full">
           AR検証モード（登録不要）
         </span>
@@ -201,14 +150,19 @@ export default function ARTestScene() {
           {phase === "detected" && (
             <span className="inline-block w-3 h-3 rounded-full bg-green-400" />
           )}
-          <span>{phaseLabel[phase]}</span>
+          <span>
+            {phase === "init" && "初期化中..."}
+            {phase === "scanning" && "スキャン中..."}
+            {phase === "detected" && "平面を検出しました"}
+            {phase === "error" && "エラー"}
+          </span>
         </div>
       </div>
 
-      {/* エラー表示 */}
+      {/* エラー */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center p-6">
-          <div className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs">
+          <div className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs whitespace-pre-line">
             <p className="text-red-400 font-bold mb-2">カメラエラー</p>
             <p>{error}</p>
           </div>
@@ -216,4 +170,73 @@ export default function ARTestScene() {
       )}
     </div>
   )
+}
+
+// 遠近感のある床面マーカーを Canvas 2D で描画
+function drawFloorMarker(ctx: CanvasRenderingContext2D, w: number, h: number, tick: number) {
+  // 台形（遠近感のある床面矩形）の頂点を定義
+  const cx = w * 0.5               // 中心X
+  const horizonY = h * 0.52        // 地平線Y（画面中央よりやや下）
+  const nearY = h * 0.82           // 手前の辺のY
+  const nearHalf = w * 0.32        // 手前の辺の幅の半分
+  const farHalf = w * 0.12         // 奥の辺の幅の半分
+
+  // 呼吸アニメーション
+  const breathe = 1 + Math.sin(tick * 0.04) * 0.015
+
+  const tl = { x: cx - farHalf * breathe,  y: horizonY }
+  const tr = { x: cx + farHalf * breathe,  y: horizonY }
+  const br = { x: cx + nearHalf * breathe, y: nearY }
+  const bl = { x: cx - nearHalf * breathe, y: nearY }
+
+  // 半透明オレンジ塗り
+  ctx.beginPath()
+  ctx.moveTo(tl.x, tl.y)
+  ctx.lineTo(tr.x, tr.y)
+  ctx.lineTo(br.x, br.y)
+  ctx.lineTo(bl.x, bl.y)
+  ctx.closePath()
+  ctx.fillStyle = "rgba(255, 140, 0, 0.35)"
+  ctx.fill()
+
+  // オレンジ枠線
+  ctx.strokeStyle = "rgba(255, 120, 0, 0.9)"
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+
+  // グリッド線（奥行き感）
+  ctx.strokeStyle = "rgba(255, 160, 0, 0.4)"
+  ctx.lineWidth = 1
+
+  // 縦方向の消失線 × 3本
+  for (let i = 1; i <= 3; i++) {
+    const t = i / 4
+    const topX = tl.x + (tr.x - tl.x) * t
+    const botX = bl.x + (br.x - bl.x) * t
+    ctx.beginPath()
+    ctx.moveTo(topX, horizonY)
+    ctx.lineTo(botX, nearY)
+    ctx.stroke()
+  }
+
+  // 横方向の水平線 × 2本
+  for (let i = 1; i <= 2; i++) {
+    const t = i / 3
+    const lx = tl.x + (bl.x - tl.x) * t
+    const rx = tr.x + (br.x - tr.x) * t
+    const y  = horizonY + (nearY - horizonY) * t
+    ctx.beginPath()
+    ctx.moveTo(lx, y)
+    ctx.lineTo(rx, y)
+    ctx.stroke()
+  }
+
+  // 四隅のコーナーマーカー
+  const corners = [tl, tr, br, bl]
+  corners.forEach(pt => {
+    ctx.beginPath()
+    ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2)
+    ctx.fillStyle = "rgba(255, 200, 0, 0.95)"
+    ctx.fill()
+  })
 }

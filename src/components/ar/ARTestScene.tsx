@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 const CORNER_LABELS = ["左前", "右前", "右奥", "左奥"]
-type Point = { x: number; y: number }
+type Point = { x: number; y: number } // normalized 0–1
 
 export default function ARTestScene() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -34,14 +34,12 @@ export default function ARTestScene() {
     const resize = () => {
       const c = canvasRef.current
       if (!c) return
-      c.width = c.offsetWidth
-      c.height = c.offsetHeight
-      redraw(corners, done, c)
+      c.width = window.innerWidth
+      c.height = window.innerHeight
     }
     resize()
     window.addEventListener("resize", resize)
     return () => window.removeEventListener("resize", resize)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // コーナーが変わるたびに再描画
@@ -50,21 +48,31 @@ export default function ARTestScene() {
     if (c) redraw(corners, done, c)
   }, [corners, done])
 
-  const handleTap = (e: React.TouchEvent<HTMLCanvasElement> | React.MouseEvent<HTMLCanvasElement>) => {
+  const handleTap = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault()
     if (done) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const clientX = "touches" in e ? e.changedTouches[0].clientX : e.clientX
-    const clientY = "touches" in e ? e.changedTouches[0].clientY : e.clientY
-    const pt: Point = {
-      x: (clientX - rect.left) * (canvas.width / rect.width),
-      y: (clientY - rect.top) * (canvas.height / rect.height),
-    }
 
-    const next = [...corners, pt]
-    if (next.length === 4) setDone(true)
-    setCorners(next)
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+
+    const clientX =
+      "touches" in e
+        ? (e.touches[0]?.clientX ?? (e as any).changedTouches[0]?.clientX)
+        : (e as React.MouseEvent).clientX
+    const clientY =
+      "touches" in e
+        ? (e.touches[0]?.clientY ?? (e as any).changedTouches[0]?.clientY)
+        : (e as React.MouseEvent).clientY
+
+    if (clientX == null || clientY == null) return
+
+    const x = (clientX - rect.left) / rect.width
+    const y = (clientY - rect.top) / rect.height
+
+    setCorners((prev) => {
+      const next = [...prev, { x, y }]
+      if (next.length === 4) setDone(true)
+      return next
+    })
   }
 
   const reset = () => {
@@ -96,38 +104,80 @@ export default function ARTestScene() {
         muted
       />
 
-      {/* タップ・描画用 Canvas */}
+      {/* 線描画用 Canvas（zIndex: 5） */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ touchAction: "none" }}
-        onTouchEnd={handleTap}
-        onClick={handleTap}
+        style={{
+          position: "fixed",
+          inset: 0,
+          width: "100vw",
+          height: "100vh",
+          zIndex: 5,
+          pointerEvents: "none",
+        }}
       />
 
-      {/* ヘッダー */}
-      <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none">
+      {/* タップ受付オーバーレイ（zIndex: 10） */}
+      <div
+        style={{ position: "fixed", inset: 0, zIndex: 10 }}
+        onTouchEnd={handleTap}
+        onMouseDown={handleTap}
+      />
+
+      {/* 角マーカー（zIndex: 20） */}
+      {corners.map((corner, i) => (
+        <div
+          key={i}
+          style={{
+            position: "fixed",
+            left: `${corner.x * 100}%`,
+            top: `${corner.y * 100}%`,
+            transform: "translate(-50%, -50%)",
+            width: 20,
+            height: 20,
+            borderRadius: "50%",
+            backgroundColor: done ? "orange" : "white",
+            border: "2px solid rgba(0,0,0,0.5)",
+            zIndex: 20,
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+
+      {/* ヘッダー（zIndex: 30） */}
+      <div
+        className="absolute top-4 inset-x-0 flex justify-center pointer-events-none"
+        style={{ zIndex: 30 }}
+      >
         <span className="bg-black/50 text-white text-xs px-3 py-1 rounded-full">
           収納スペース計測（タップで計測）
         </span>
       </div>
 
-      {/* 指示バナー */}
+      {/* 指示バナー（zIndex: 30） */}
       {!done && (
-        <div className="absolute top-14 inset-x-0 flex justify-center pointer-events-none">
+        <div
+          className="absolute top-14 inset-x-0 flex justify-center pointer-events-none"
+          style={{ zIndex: 30 }}
+        >
           <div className="bg-blue-600/90 text-white text-base font-semibold px-5 py-2.5 rounded-2xl shadow-lg">
             {nextLabel}をタップ（{corners.length + 1} / 4）
           </div>
         </div>
       )}
 
-      {/* コーナー達成インジケーター */}
-      <div className="absolute top-28 inset-x-0 flex justify-center gap-2 pointer-events-none">
+      {/* コーナー達成インジケーター（zIndex: 30） */}
+      <div
+        className="absolute top-28 inset-x-0 flex justify-center gap-2 pointer-events-none"
+        style={{ zIndex: 30 }}
+      >
         {CORNER_LABELS.map((label, i) => (
           <div
             key={label}
             className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-              i < corners.length ? "bg-green-500 text-white scale-110" : "bg-white/30 text-white"
+              i < corners.length
+                ? "bg-green-500 text-white scale-110"
+                : "bg-white/30 text-white"
             }`}
           >
             {i + 1}
@@ -135,9 +185,12 @@ export default function ARTestScene() {
         ))}
       </div>
 
-      {/* 完了バナー */}
+      {/* 完了バナー（zIndex: 30） */}
       {done && (
-        <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-6 shadow-2xl">
+        <div
+          className="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl p-6 shadow-2xl"
+          style={{ zIndex: 30 }}
+        >
           <h2 className="text-lg font-bold text-gray-900 mb-1">枠組み完成！</h2>
           <p className="text-sm text-gray-500 mb-4">4コーナーをマーキングしました</p>
           <div className="flex gap-3">
@@ -157,9 +210,12 @@ export default function ARTestScene() {
         </div>
       )}
 
-      {/* エラー */}
+      {/* エラー（zIndex: 30） */}
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center p-6">
+        <div
+          className="absolute inset-0 flex items-center justify-center p-6"
+          style={{ zIndex: 30 }}
+        >
           <div className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs">
             <p className="text-red-400 font-bold mb-2">エラー</p>
             <p>{error}</p>
@@ -170,17 +226,20 @@ export default function ARTestScene() {
   )
 }
 
-// Canvas 2D 描画
+// Canvas 2D 描画（正規化座標 → ピクセル変換）
 function redraw(corners: Point[], done: boolean, canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext("2d")
   if (!ctx) return
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  const w = canvas.width
+  const h = canvas.height
+  ctx.clearRect(0, 0, w, h)
 
   if (corners.length === 0) return
 
-  // 打ったコーナーをつなぐ線
+  const px = corners.map((p) => ({ x: p.x * w, y: p.y * h }))
+
   ctx.beginPath()
-  corners.forEach((pt, i) => {
+  px.forEach((pt, i) => {
     if (i === 0) ctx.moveTo(pt.x, pt.y)
     else ctx.lineTo(pt.x, pt.y)
   })
@@ -191,10 +250,9 @@ function redraw(corners: Point[], done: boolean, canvas: HTMLCanvasElement) {
   ctx.stroke()
   ctx.setLineDash([])
 
-  // 塗り（完了時のみ）
   if (done) {
     ctx.beginPath()
-    corners.forEach((pt, i) => {
+    px.forEach((pt, i) => {
       if (i === 0) ctx.moveTo(pt.x, pt.y)
       else ctx.lineTo(pt.x, pt.y)
     })
@@ -202,25 +260,4 @@ function redraw(corners: Point[], done: boolean, canvas: HTMLCanvasElement) {
     ctx.fillStyle = "rgba(255,140,0,0.2)"
     ctx.fill()
   }
-
-  // 各コーナーのドット + ラベル
-  corners.forEach((pt, i) => {
-    // ドット
-    ctx.beginPath()
-    ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2)
-    ctx.fillStyle = done ? "rgba(255,140,0,1)" : "rgba(255,255,255,0.95)"
-    ctx.fill()
-    ctx.strokeStyle = done ? "#cc6600" : "#999"
-    ctx.lineWidth = 1.5
-    ctx.stroke()
-
-    // ラベル
-    ctx.font = "bold 13px sans-serif"
-    ctx.fillStyle = "white"
-    ctx.textAlign = "center"
-    ctx.shadowColor = "rgba(0,0,0,0.8)"
-    ctx.shadowBlur = 4
-    ctx.fillText(CORNER_LABELS[i], pt.x, pt.y - 14)
-    ctx.shadowBlur = 0
-  })
 }

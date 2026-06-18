@@ -79,13 +79,21 @@ export default function ARTestScene() {
       className="relative bg-black overflow-hidden"
       style={{ width: "100vw", height: "100svh" }}
     >
-      {/* カメラ映像 — object-contain でアスペクト比を保持 */}
+      {/* カメラ映像 */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-contain"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          objectFit: "cover",
+          objectPosition: "center",
+        }}
+        autoPlay
         playsInline
         muted
-        autoPlay
       />
 
       {/* タップ・描画用 Canvas */}

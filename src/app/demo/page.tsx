@@ -9,10 +9,10 @@ type Step = "shoot" | "loading" | "result"
 type Suggestion = { target: string; location: string; reason: string }
 
 const loadingMessages = [
-  "写真を確認しています...",
-  "収納のポイントを探しています...",
-  "改善案をまとめています...",
-  "もうすぐ完成です！",
+  "部屋の余白を見ています...",
+  "季節物のしまい先を探しています...",
+  "床まわりの動線を整えています...",
+  "提案をまとめています...",
 ]
 
 export default function DemoPage() {
@@ -148,14 +148,18 @@ export default function DemoPage() {
 
   if (step === "loading") {
     return (
-      <main className="min-h-screen bg-gray-50 flex flex-col">
-        <div className="bg-amber-500 text-white text-xs text-center py-1.5 font-medium">
-          デモ版
+      <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+          写真からしまい先を準備中
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin mb-6" />
-          <h1 className="text-xl font-bold text-gray-900 mb-2">提案を作成中</h1>
-          <p className="text-gray-500">{loadingMessages[loadingIndex]}</p>
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <div className="mb-7 grid w-24 grid-cols-3 overflow-hidden rounded-lg border border-[#E8D8C7] bg-white">
+            <div className="h-20 animate-pulse bg-[#D96B2D]" />
+            <div className="h-20 animate-pulse bg-[#F5C842] [animation-delay:200ms]" />
+            <div className="h-20 animate-pulse bg-[#3DAF85] [animation-delay:400ms]" />
+          </div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight">しまい先を編集中</h1>
+          <p className="text-sm text-[#6E5A4B]">{loadingMessages[loadingIndex]}</p>
         </div>
       </main>
     )
@@ -163,31 +167,47 @@ export default function DemoPage() {
 
   if (step === "result") {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <div className="bg-amber-500 text-white text-xs text-center py-1.5 font-medium">
-          デモ版
+      <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+          すぐ試せる収納メモ
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-          <div className="text-center space-y-2">
-            <p className="text-4xl">📦</p>
-            <h1 className="text-2xl font-bold text-gray-900">収納改善案</h1>
-            <p className="text-sm text-gray-500">撮影した写真をもとに、すぐ試せる提案をまとめました</p>
+        <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
+          <div className="space-y-3">
+            <p className="inline-flex rounded-full bg-[#3DAF85]/15 px-3 py-1 text-xs font-semibold text-[#2D7C62]">
+              収納の余白が見つかりました
+            </p>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight">今日できる、3つのしまい方</h1>
+              <p className="text-sm leading-6 text-[#6E5A4B]">
+                大きく片づける前に、動線が軽くなる置き場所から始めます。
+              </p>
+            </div>
           </div>
 
           <ul className="space-y-3">
-            {suggestions.map((suggestion) => (
-              <li key={`${suggestion.target}-${suggestion.location}`} className="bg-white rounded-xl p-4 shadow-sm">
-                <p className="text-xs font-semibold text-blue-600 mb-1">何を</p>
-                <h2 className="text-lg font-bold text-gray-900 mb-3">{suggestion.target}</h2>
-                <div className="space-y-3 text-sm">
+            {suggestions.map((suggestion, index) => (
+              <li
+                key={`${suggestion.target}-${suggestion.location}`}
+                className="rounded-lg border border-[#E8D8C7] bg-white/75 p-4 shadow-sm"
+              >
+                <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold text-gray-400">どこに</p>
-                    <p className="text-gray-800">{suggestion.location}</p>
+                    <p className="mb-1 text-xs font-semibold text-[#D96B2D]">しまうもの</p>
+                    <h2 className="text-xl font-bold text-[#2F2823]">{suggestion.target}</h2>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400">なぜ</p>
-                    <p className="text-gray-700 leading-relaxed">{suggestion.reason}</p>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F5C842]/30 text-sm font-bold text-[#8A5A10]">
+                    {index + 1}
+                  </span>
+                </div>
+                <div className="grid gap-3 text-sm sm:grid-cols-[0.9fr_1.1fr]">
+                  <div className="rounded-lg bg-[#FBF5EE] p-3">
+                    <p className="text-xs font-semibold text-[#9B806C]">しまい先</p>
+                    <p className="mt-1 font-semibold text-[#3B312A]">{suggestion.location}</p>
+                  </div>
+                  <div className="rounded-lg bg-[#FBF5EE] p-3">
+                    <p className="text-xs font-semibold text-[#9B806C]">整う理由</p>
+                    <p className="mt-1 leading-6 text-[#5E4D40]">{suggestion.reason}</p>
                   </div>
                 </div>
               </li>
@@ -201,14 +221,14 @@ export default function DemoPage() {
           <div className="space-y-3">
             <button
               onClick={resetDemo}
-              className="w-full py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-100 transition-colors"
+              className="w-full rounded-lg border border-[#E1CDB9] bg-white/60 py-3 font-medium text-[#6E5A4B] transition-colors hover:bg-white"
             >
               もう一度撮る
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="w-full rounded-lg bg-[#D96B2D] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20] disabled:opacity-50"
             >
               {saving ? "保存中..." : "保存する"}
             </button>
@@ -219,17 +239,19 @@ export default function DemoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="bg-amber-500 text-white text-xs text-center py-1.5 font-medium">
-        デモ版
+    <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+      <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+        写真で収納を整える
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <div className="text-center space-y-2">
-          <p className="text-4xl">📷</p>
-          <h1 className="text-2xl font-bold text-gray-900">写真で収納を見直す</h1>
-          <p className="text-sm text-gray-500 leading-relaxed">
-            部屋全体か収納スペースのどちらか1枚で提案できます。両方撮ると提案の質が上がります。
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+        <div className="space-y-3">
+          <p className="inline-flex rounded-full bg-[#F5C842]/25 px-3 py-1 text-xs font-semibold text-[#8A5A10]">
+            Step 1
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight">部屋と収納の余白を写す</h1>
+          <p className="text-sm leading-6 text-[#6E5A4B]">
+            どちらか1枚で始められます。両方あると、しまい先の文脈まで見えやすくなります。
           </p>
         </div>
 
@@ -269,15 +291,15 @@ export default function DemoPage() {
           onChange={(event) => handlePhotoChange(event, setStoragePhoto)}
         />
 
-        <div className="bg-white rounded-xl p-4 shadow-sm text-sm">
+        <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 text-sm shadow-sm">
           {hasBothPhotos ? (
-            <p className="text-blue-700 font-medium">より精度の高い提案が受け取れます</p>
+            <p className="font-semibold text-[#2D7C62]">より精度の高い提案が受け取れます</p>
           ) : storagePhoto ? (
-            <p className="text-gray-600">収納スペースだけで提案します</p>
+            <p className="text-[#6E5A4B]">収納スペースだけで提案します</p>
           ) : roomPhoto ? (
-            <p className="text-gray-600">部屋全体の写真で提案します</p>
+            <p className="text-[#6E5A4B]">部屋全体の写真で提案します</p>
           ) : (
-            <p className="text-gray-500">どちらか1枚を撮影すると提案に進めます</p>
+            <p className="text-[#8B7360]">どちらか1枚を撮影すると提案に進めます</p>
           )}
         </div>
 
@@ -289,13 +311,13 @@ export default function DemoPage() {
           <button
             onClick={handleAnalyze}
             disabled={!canAnalyze}
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold text-base hover:bg-blue-700 transition-colors shadow-md disabled:opacity-40 disabled:hover:bg-blue-600"
+            className="w-full rounded-lg bg-[#D96B2D] py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20] disabled:bg-[#E1CDB9] disabled:text-[#9B806C]"
           >
             提案を見る
           </button>
           <button
             onClick={() => router.push("/")}
-            className="w-full py-2 text-gray-500 text-sm"
+            className="w-full py-2 text-sm text-[#8B7360]"
           >
             トップに戻る
           </button>
@@ -321,10 +343,10 @@ function PhotoCapture({
   onClear: () => void
 }) {
   return (
-    <section className="bg-white rounded-xl p-4 shadow-sm space-y-3">
+    <section className="space-y-3 rounded-lg border border-[#E8D8C7] bg-white/70 p-4 shadow-sm">
       <div>
-        <h2 className="font-semibold text-gray-900">{title}</h2>
-        <p className="text-xs text-gray-500 mt-1">{description}</p>
+        <h2 className="font-semibold text-[#2F2823]">{title}</h2>
+        <p className="mt-1 text-xs text-[#8B7360]">{description}</p>
       </div>
 
       {photo ? (
@@ -333,18 +355,18 @@ function PhotoCapture({
           <img
             src={photo}
             alt={`${title}のプレビュー`}
-            className="w-full aspect-[4/3] object-cover rounded-lg bg-gray-100"
+            className="aspect-[4/3] w-full rounded-lg bg-[#F9F3EC] object-cover"
           />
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={onRetake}
-              className="py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="rounded-lg border border-[#E1CDB9] py-2 text-sm font-medium text-[#6E5A4B] transition-colors hover:bg-[#FBF5EE]"
             >
               撮り直し
             </button>
             <button
               onClick={onClear}
-              className="py-2 text-gray-500 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="rounded-lg py-2 text-sm font-medium text-[#9B806C] transition-colors hover:bg-[#FBF5EE]"
             >
               削除
             </button>
@@ -353,7 +375,7 @@ function PhotoCapture({
       ) : (
         <button
           onClick={onCapture}
-          className="w-full aspect-[4/3] rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-600 text-sm font-medium hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+          className="aspect-[4/3] w-full rounded-lg border-2 border-dashed border-[#E1CDB9] bg-[#FBF5EE] text-sm font-semibold text-[#8B7360] transition-colors hover:border-[#D96B2D] hover:bg-[#F9F3EC] hover:text-[#C85A20]"
         >
           撮影する
         </button>

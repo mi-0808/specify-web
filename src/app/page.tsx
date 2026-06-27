@@ -12,7 +12,7 @@ export default function HomePage() {
         </div>
         <div className="flex flex-col gap-3">
           <Link
-            href="/demo"
+            href="/ar-test"
             className="w-full py-3.5 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md"
           >
             今すぐARを体験する（登録不要）

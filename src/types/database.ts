@@ -101,6 +101,8 @@ export interface Database {
           score: number | null;
           reasoning: string | null;
           storage_options: Json | null;
+          image_tag: string | null;
+          raw_json: Json | null;
           created_at: string;
         };
         Insert: {
@@ -109,6 +111,8 @@ export interface Database {
           score?: number | null;
           reasoning?: string | null;
           storage_options?: Json | null;
+          image_tag?: string | null;
+          raw_json?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -117,6 +121,8 @@ export interface Database {
           score?: number | null;
           reasoning?: string | null;
           storage_options?: Json | null;
+          image_tag?: string | null;
+          raw_json?: Json | null;
           created_at?: string;
         };
       };

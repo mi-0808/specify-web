@@ -7,15 +7,15 @@ export default function HomePage() {
         <div>
           <h1 className="text-4xl font-bold text-gray-900">Specify</h1>
           <p className="mt-2 text-gray-600">
-            ARで収納スペースを計測し、AIが最適な整理術を提案
+            写真を撮るだけで、収納の改善案を提案します
           </p>
         </div>
         <div className="flex flex-col gap-3">
           <Link
-            href="/ar-test"
+            href="/demo"
             className="w-full py-3.5 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-md"
           >
-            今すぐARを体験する（登録不要）
+            写真を撮って試してみる（登録不要）
           </Link>
           <Link
             href="/login"

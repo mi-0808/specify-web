@@ -60,13 +60,14 @@ export default function DemoPage() {
     setStep("submitting")
     setErrorMessage("")
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push("/login")
-      return
-    }
-
     try {
+      let { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        const { data: anonData, error: anonError } = await supabase.auth.signInAnonymously()
+        if (anonError || !anonData.user) throw anonError ?? new Error("anonymous sign-in failed")
+        user = anonData.user
+      }
+
       const [roomImageUrl, storageImageUrl] = await Promise.all([
         uploadPhoto(roomFile, "room"),
         uploadPhoto(storageFile, "storage"),

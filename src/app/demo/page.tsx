@@ -172,7 +172,6 @@ export default function DemoPage() {
           ref={roomInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
           onChange={(event) => handlePhotoChange(event, setRoomPhoto, setRoomFile)}
         />
@@ -180,7 +179,6 @@ export default function DemoPage() {
           ref={storageInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           className="hidden"
           onChange={(event) => handlePhotoChange(event, setStoragePhoto, setStorageFile)}
         />

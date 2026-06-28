@@ -103,6 +103,10 @@ export interface Database {
           storage_options: Json | null;
           image_tag: string | null;
           raw_json: Json | null;
+          room_image_url: string | null;
+          storage_image_url: string | null;
+          result_image_url: string | null;
+          status: string;
           created_at: string;
         };
         Insert: {
@@ -113,6 +117,10 @@ export interface Database {
           storage_options?: Json | null;
           image_tag?: string | null;
           raw_json?: Json | null;
+          room_image_url?: string | null;
+          storage_image_url?: string | null;
+          result_image_url?: string | null;
+          status?: string;
           created_at?: string;
         };
         Update: {
@@ -123,6 +131,10 @@ export interface Database {
           storage_options?: Json | null;
           image_tag?: string | null;
           raw_json?: Json | null;
+          room_image_url?: string | null;
+          storage_image_url?: string | null;
+          result_image_url?: string | null;
+          status?: string;
           created_at?: string;
         };
       };

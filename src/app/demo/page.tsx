@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import type { Database } from "@/types/database"
 
-type Step = "shoot" | "submitting"
+type Step = "shoot" | "submitting" | "sent"
 
 export default function DemoPage() {
   const [step, setStep] = useState<Step>("shoot")
@@ -13,6 +13,7 @@ export default function DemoPage() {
   const [storagePhoto, setStoragePhoto] = useState<string | null>(null)
   const [roomFile, setRoomFile] = useState<File | null>(null)
   const [storageFile, setStorageFile] = useState<File | null>(null)
+  const [suggestionId, setSuggestionId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState("")
   const roomInputRef = useRef<HTMLInputElement>(null)
   const storageInputRef = useRef<HTMLInputElement>(null)
@@ -99,7 +100,8 @@ export default function DemoPage() {
 
       if (suggestionError || !suggestion) throw suggestionError ?? new Error("suggestion insert failed")
 
-      router.push(`/demo/waiting/${suggestion.id}`)
+      setSuggestionId(suggestion.id)
+      setStep("sent")
     } catch (error) {
       console.error(error)
       setErrorMessage("送信に失敗しました。時間をおいてもう一度お試しください。")
@@ -121,6 +123,39 @@ export default function DemoPage() {
           </div>
           <h1 className="mb-2 text-2xl font-bold tracking-tight">写真を送っています</h1>
           <p className="text-sm text-[#6E5A4B]">少々お待ちください...</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === "sent") {
+    return (
+      <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+          写真を送信しました
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#3DAF85]/15 text-3xl">
+            ✅
+          </div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight">送りました！</h1>
+          <p className="mb-8 text-sm leading-6 text-[#6E5A4B]">
+            収納の改善案を準備しています。準備ができたら、いつでも下のボタンから確認できます。
+          </p>
+          <div className="w-full max-w-sm space-y-3">
+            <button
+              onClick={() => suggestionId && router.push(`/demo/waiting/${suggestionId}`)}
+              className="w-full rounded-lg bg-[#D96B2D] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20]"
+            >
+              提案を確認する
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-2 text-sm text-[#8B7360]"
+            >
+              トップに戻る
+            </button>
+          </div>
         </div>
       </main>
     )

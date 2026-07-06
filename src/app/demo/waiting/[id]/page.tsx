@@ -46,12 +46,13 @@ export default function DemoWaitingPage() {
   }, [params.id, supabase])
 
   if (suggestion?.status === "done" && suggestion.result_image_url) {
+    const options = suggestion.storage_options as { target: string; location: string; reason: string }[] | null
+
     return (
       <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
         <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
           収納の改善案が届きました
         </div>
-
         <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
           <div className="space-y-2">
             <p className="inline-flex rounded-full bg-[#3DAF85]/15 px-3 py-1 text-xs font-semibold text-[#2D7C62]">
@@ -66,6 +67,24 @@ export default function DemoWaitingPage() {
             alt="収納の改善案"
             className="w-full rounded-lg border border-[#E8D8C7] bg-white object-cover"
           />
+
+          {suggestion.reasoning && (
+            <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 text-sm leading-6 text-[#2F2823]">
+              {suggestion.reasoning}
+            </div>
+          )}
+
+          {options && options.length > 0 && (
+            <div className="space-y-3">
+              {options.map((opt, i) => (
+                <div key={i} className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4">
+                  <p className="font-semibold text-[#2F2823]">{opt.target}</p>
+                  <p className="mt-1 text-xs text-[#D96B2D]">→ {opt.location}</p>
+                  <p className="mt-1 text-xs text-[#6E5A4B]">{opt.reason}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="space-y-3">
             <button

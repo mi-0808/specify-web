@@ -101,6 +101,18 @@ export default function DemoPage() {
       if (suggestionError || !suggestion) throw suggestionError ?? new Error("suggestion insert failed")
 
       setSuggestionId(suggestion.id)
+
+      // 非同期で解析をキック（レスポンスを待たない）
+      fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          suggestion_id: suggestion.id,
+          room_image_url: roomImageUrl,
+          storage_image_url: storageImageUrl,
+        }),
+      }).catch(() => {})
+
       setStep("sent")
     } catch (error) {
       console.error(error)

@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     size: "1024x1024",
   })
 
-  const imageUrl = image.data[0].url!
+  const imageUrl = image.data?.[0]?.url
+  if (!imageUrl) throw new Error("no image url returned")
 
   // Supabase Storageに保存
   const res = await fetch(imageUrl)

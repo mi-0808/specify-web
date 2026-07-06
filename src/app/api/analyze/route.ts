@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
 import { createClient } from "@/lib/supabase/server"
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
 export async function POST(req: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   const { suggestion_id, room_image_url, storage_image_url } = await req.json()
 
   const supabase = await createClient()

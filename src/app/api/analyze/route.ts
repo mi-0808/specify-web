@@ -39,7 +39,9 @@ JSONのみ返してください。`,
   const cleaned = raw.replace(/```json|```/g, "").trim()
   const parsed = JSON.parse(cleaned)
 
-  await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  await db
     .from("suggestions")
     .update({
       reasoning: parsed.reasoning,

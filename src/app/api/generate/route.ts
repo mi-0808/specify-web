@@ -32,7 +32,9 @@ export async function POST(req: NextRequest) {
 
   const { data } = supabase.storage.from("specify-images").getPublicUrl(path)
 
-  await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any
+  await db
     .from("suggestions")
     .update({ result_image_url: data.publicUrl, status: "done" })
     .eq("id", suggestion_id)

@@ -1,9 +1,60 @@
-export async function POST() {
-  return Response.json({
-    suggestions: [
-      { target: "冬物のコート", location: "押入れの上段", reason: "使用頻度が低いものは上段にまとめると動線がスッキリします" },
-      { target: "季節外の寝具", location: "圧縮袋に入れてクローゼット奥", reason: "圧縮袋で体積を減らすと収納スペースを大幅に確保できます" },
-      { target: "床に置いてある小物", location: "引き出しや収納ボックスの中", reason: "床面積を空けると部屋全体がスッキリ見えます" },
+import { NextRequest, NextResponse } from "next/server"
+import OpenAI from "openai"
+import { createClient } from "@/lib/supabase/server"
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+export async function POST(req: NextRequest) {
+  const { suggestion_id, room_image_url, storage_image_url } = await req.json()
+
+  const supabase = await createClient()
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `以下の2枚の画像（部屋全体・収納スペース）を分析して、収納の改善提案をしてください。
+JSON形式で返してください：
+{
+  "reasoning": "全体的な改善方針の説明（200字程度）",
+  "suggestions": [
+    { "target": "対象物", "location": "移動先", "reason": "理由" }
+  ]
+}
+JSONのみ返してください。`,
+          },
+          { type: "image_url", image_url: { url: room_image_url } },
+          { type: "image_url", image_url: { url: storage_image_url } },
+        ],
+      },
     ],
+    max_tokens: 1000,
   })
+
+  const raw = completion.choices[0].message.content ?? ""
+  const cleaned = raw.replace(/```json|```/g, "").trim()
+  const parsed = JSON.parse(cleaned)
+
+  await supabase
+    .from("suggestions")
+    .update({
+      reasoning: parsed.reasoning,
+      storage_options: parsed.suggestions,
+      raw_json: parsed,
+      status: "analyzing",
+    })
+    .eq("id", suggestion_id)
+
+  // generate を非同期キック
+  fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ suggestion_id, room_image_url, reasoning: parsed.reasoning }),
+  })
+
+  return NextResponse.json({ ok: true })
 }

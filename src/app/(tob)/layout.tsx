@@ -1,0 +1,40 @@
+import type { ReactNode } from "react"
+import { createClient } from "@/lib/supabase/server"
+
+export default async function ToBLayout({ children }: { children: ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim())
+  const isAdmin = user && adminEmails.includes(user.email ?? "")
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="border-b border-slate-200 bg-white px-4 py-3 flex items-center justify-between">
+        <a href="/b" className="text-sm font-bold tracking-tight text-slate-900">
+          Specify <span className="font-normal text-slate-400">for Business</span>
+        </a>
+        <div className="flex items-center gap-3">
+          {isAdmin && (
+            <a href="/b/admin" className="text-xs font-medium text-slate-500 hover:text-slate-800">
+              管理画面
+            </a>
+          )}
+          {user ? (
+            <a href="/b/workspace" className="text-xs font-medium text-blue-600 hover:underline">
+              エリア一覧
+            </a>
+          ) : (
+            <a
+              href="/login?next=/b/workspace"
+              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+            >
+              ログイン
+            </a>
+          )}
+        </div>
+      </header>
+      {children}
+    </div>
+  )
+}

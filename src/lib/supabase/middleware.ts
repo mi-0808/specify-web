@@ -31,17 +31,24 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith("/login");
-  const isPublicRoute = pathname === "/" || isAuthRoute || pathname.startsWith("/demo");
+  const isPublicRoute =
+    pathname === "/" ||
+    pathname === "/b" ||
+    isAuthRoute ||
+    pathname.startsWith("/demo");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthRoute) {
+    const next = request.nextUrl.searchParams.get("next");
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = next ?? "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

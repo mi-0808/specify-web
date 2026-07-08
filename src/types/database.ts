@@ -138,6 +138,64 @@ export interface Database {
           created_at?: string;
         };
       };
+      b_scans: {
+        Row: {
+          id: string;
+          user_id: string;
+          area_name: string;
+          image_url: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          area_name: string;
+          image_url?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          area_name?: string;
+          image_url?: string | null;
+          status?: string;
+          created_at?: string;
+        };
+      };
+      b_markers: {
+        Row: {
+          id: string;
+          scan_id: string;
+          x: number;
+          y: number;
+          category: string;
+          comment: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          scan_id: string;
+          x: number;
+          y: number;
+          category: string;
+          comment: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          scan_id?: string;
+          x?: number;
+          y?: number;
+          category?: string;
+          comment?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+      };
     };
   };
 }

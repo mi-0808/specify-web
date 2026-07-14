@@ -54,6 +54,7 @@ export default function BAdminPanel({
   const [selectedScan, setSelectedScan] = useState<Scan | null>(pendingScans[0] ?? null)
   const [markers, setMarkers] = useState<Marker[]>([])
   const [sending, setSending] = useState(false)
+  const [suggesting, setSuggesting] = useState(false)
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState("")
   const imageRef = useRef<HTMLDivElement>(null)
@@ -81,6 +82,35 @@ export default function BAdminPanel({
     setSelectedScan(scan)
     setMarkers([])
     setError("")
+  }
+
+  async function handleSuggest() {
+    if (!selectedScan?.image_url) return
+    setSuggesting(true)
+    setError("")
+    try {
+      const res = await fetch("/api/ai/suggest-b", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_url: selectedScan.image_url, area_name: selectedScan.area_name }),
+      })
+      const data = await res.json()
+      if (data.markers?.length) {
+        setMarkers(data.markers.map((m: { x: number; y: number; category: Category; comment: string }) => ({
+          id: crypto.randomUUID(),
+          x: m.x,
+          y: m.y,
+          category: m.category ?? "suggestion",
+          comment: m.comment,
+        })))
+      } else {
+        setError("AI提案を生成できませんでした")
+      }
+    } catch {
+      setError("AI提案の取得に失敗しました")
+    } finally {
+      setSuggesting(false)
+    }
   }
 
   async function handleSend() {
@@ -210,9 +240,16 @@ export default function BAdminPanel({
                 {/* 画像＋マーカー */}
                 {selectedScan.image_url ? (
                   <div>
-                    <p className="mb-1.5 text-xs text-slate-500">
-                      📍 写真をクリックしてマーカーを追加
-                    </p>
+                    <div className="mb-1.5 flex items-center justify-between">
+                      <p className="text-xs text-slate-500">📍 写真をクリックしてマーカーを追加</p>
+                      <button
+                        onClick={handleSuggest}
+                        disabled={suggesting}
+                        className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                      >
+                        {suggesting ? "AI生成中..." : "✨ AIに提案させる"}
+                      </button>
+                    </div>
                     <div
                       ref={imageRef}
                       onClick={handleImageClick}

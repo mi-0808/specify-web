@@ -8,7 +8,6 @@ import type { SpaceDimensions } from "@/lib/webxr/measure"
 import type { Database } from "@/types/database"
 
 type SpaceInsert = Database["public"]["Tables"]["spaces"]["Insert"]
-type SpaceRow = Database["public"]["Tables"]["spaces"]["Row"]
 
 // ARコンポーネントはSSR無効（WebXR / DOM API を使うため）
 const ARMeasureScene = dynamic(
@@ -25,7 +24,6 @@ export default function NewSpacePage() {
   const [dimensions, setDimensions] = useState<SpaceDimensions | null>(null)
   const [saving, setSaving] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   function handleMeasured(dims: SpaceDimensions) {
     setDimensions(dims)
@@ -36,13 +34,14 @@ export default function NewSpacePage() {
     if (!dimensions || !spaceName) return
     setSaving(true)
 
+    // ブラウザクライアントはユーザー操作時に生成する（ビルド時のprerenderで環境変数を要求しないため）
+    const supabase = createClient()
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push("/login"); return }
 
     const height = parseFloat(heightInput) || 0
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from("spaces")
       .insert({
         user_id: user.id,
@@ -52,7 +51,7 @@ export default function NewSpacePage() {
         height_cm: height,
       } satisfies SpaceInsert)
       .select()
-      .single() as { data: SpaceRow | null; error: unknown }
+      .single()
 
     if (error) {
       console.error(error)

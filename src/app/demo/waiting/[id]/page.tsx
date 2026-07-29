@@ -7,14 +7,7 @@ import type { Database } from "@/types/database"
 
 type SuggestionRow = Database["public"]["Tables"]["suggestions"]["Row"]
 
-type SuggestionMarker = {
-  id: string
-  image_type: "room" | "storage"
-  x: number
-  y: number
-  comment: string
-  sort_order: number
-}
+type SuggestionMarker = Database["public"]["Tables"]["suggestion_markers"]["Row"]
 
 export default function DemoWaitingPage() {
   const params = useParams<{ id: string }>()
@@ -26,11 +19,10 @@ export default function DemoWaitingPage() {
 
   useEffect(() => {
     let cancelled = false
+    let intervalId = 0
 
     async function poll() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from("suggestions")
         .select("*")
         .eq("id", params.id)
@@ -39,22 +31,60 @@ export default function DemoWaitingPage() {
       if (cancelled) return
       if (error || !data) { setErrorMessage("提案の取得に失敗しました。"); return }
 
-      setSuggestion(data as SuggestionRow)
+      setSuggestion(data)
+
+      // 完了・失敗が確定したらポーリングを止める
+      if (data.status === "done" || data.status === "failed") {
+        window.clearInterval(intervalId)
+      }
 
       if (data.status === "done") {
-        const { data: markerData } = await db
+        const { data: markerData } = await supabase
           .from("suggestion_markers")
           .select("*")
           .eq("suggestion_id", params.id)
           .order("sort_order")
-        if (!cancelled && markerData) setMarkers(markerData as SuggestionMarker[])
+        if (!cancelled && markerData) setMarkers(markerData)
       }
     }
 
     poll()
-    const intervalId = window.setInterval(poll, 5000)
+    intervalId = window.setInterval(poll, 5000)
     return () => { cancelled = true; window.clearInterval(intervalId) }
   }, [params.id, supabase])
+
+  if (suggestion?.status === "failed") {
+    return (
+      <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+          収納の改善案
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#D96B2D]/15 text-3xl">
+            🙏
+          </div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight">提案の作成に失敗しました</h1>
+          <p className="mb-8 max-w-sm text-sm leading-6 text-[#6E5A4B]">
+            写真がうまく読み取れなかったようです。明るい場所で撮り直すと成功しやすくなります。
+          </p>
+          <div className="w-full max-w-sm space-y-3">
+            <button
+              onClick={() => router.push("/demo")}
+              className="w-full rounded-lg bg-[#D96B2D] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20]"
+            >
+              もう一度撮る
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-2 text-sm text-[#8B7360]"
+            >
+              トップに戻る
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   if (suggestion?.status === "done") {
     const roomMarkers = markers.filter((m) => m.image_type === "room")

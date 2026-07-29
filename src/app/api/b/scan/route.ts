@@ -1,26 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-
-async function notifyAdmin(areaName: string, userEmail: string) {
-  const apiKey = process.env.RESEND_API_KEY
-  const adminEmail = (process.env.ADMIN_EMAILS ?? "").split(",")[0].trim()
-  if (!apiKey || !adminEmail) return
-
-  const adminUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/b/admin`
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Specify <onboarding@resend.dev>",
-      to: adminEmail,
-      subject: `【Specify】新しいスキャンが届きました：${areaName}`,
-      html: `<p>新しいスキャンが届きました。</p><p>エリア: <strong>${areaName}</strong></p><p>送信者: ${userEmail}</p><p><a href="${adminUrl}">管理画面を開く</a></p>`,
-    }),
-  }).catch(() => {})
-}
+import { buildScanNotification, sendEmail } from "@/lib/email"
+import { getAdminEmails } from "@/lib/supabase/admin"
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -49,9 +30,7 @@ export async function POST(req: NextRequest) {
 
   const { data: urlData } = supabase.storage.from("specify-images").getPublicUrl(path)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
-  const { data: scan, error: scanError } = await db
+  const { data: scan, error: scanError } = await supabase
     .from("b_scans")
     .insert({ user_id: user.id, area_name, image_url: urlData.publicUrl, status: "pending" })
     .select("id")
@@ -61,8 +40,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "scan insert failed" }, { status: 500 })
   }
 
-  // 管理者へメール通知（非同期・失敗しても無視）
-  notifyAdmin(area_name, user.email ?? "不明")
+  // 管理者へメール通知。レスポンスを待たせないが after() でランタイムに完了を保証させる
+  const adminEmail = getAdminEmails()[0]
+  if (adminEmail) {
+    const { subject, html } = buildScanNotification(area_name, user.email ?? "不明")
+    after(() => sendEmail({ to: adminEmail, subject, html }))
+  } else {
+    console.warn("[b/scan] ADMIN_EMAILS未設定のため管理者通知をスキップ")
+  }
 
   return NextResponse.json({ scan_id: scan.id, status: "pending" })
 }

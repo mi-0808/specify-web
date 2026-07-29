@@ -18,9 +18,10 @@ export default function DemoPage() {
   const roomInputRef = useRef<HTMLInputElement>(null)
   const storageInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
-  const supabase = createClient()
 
+  // どちらか1枚あれば送信できる（2枚あると提案の精度が上がる）
   const hasBothPhotos = roomPhoto !== null && storagePhoto !== null
+  const hasAnyPhoto = roomPhoto !== null || storagePhoto !== null
 
   function handlePhotoChange(
     event: ChangeEvent<HTMLInputElement>,
@@ -42,7 +43,11 @@ export default function DemoPage() {
     event.target.value = ""
   }
 
-  async function uploadPhoto(file: File, prefix: string) {
+  async function uploadPhoto(
+    supabase: ReturnType<typeof createClient>,
+    file: File,
+    prefix: string
+  ) {
     const extension = file.name.split(".").pop() || "jpg"
     const path = `${prefix}-${Date.now()}.${extension}`
     const { error } = await supabase.storage
@@ -56,10 +61,13 @@ export default function DemoPage() {
   }
 
   async function handleAnalyze() {
-    if (!hasBothPhotos || !roomFile || !storageFile) return
+    if (!hasAnyPhoto) return
 
     setStep("submitting")
     setErrorMessage("")
+
+    // ブラウザクライアントはユーザー操作時に生成する（ビルド時のprerenderで環境変数を要求しないため）
+    const supabase = createClient()
 
     try {
       let { data: { user } } = await supabase.auth.getUser()
@@ -69,14 +77,13 @@ export default function DemoPage() {
         user = anonData.user
       }
 
+      // スキップされた側は null のまま送る
       const [roomImageUrl, storageImageUrl] = await Promise.all([
-        uploadPhoto(roomFile, "room"),
-        uploadPhoto(storageFile, "storage"),
+        roomFile ? uploadPhoto(supabase, roomFile, "room") : Promise.resolve(null),
+        storageFile ? uploadPhoto(supabase, storageFile, "storage") : Promise.resolve(null),
       ])
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any
-      const { data: space, error: spaceError } = await db
+      const { data: space, error: spaceError } = await supabase
         .from("spaces")
         .insert({
           user_id: user.id,
@@ -87,7 +94,7 @@ export default function DemoPage() {
 
       if (spaceError || !space) throw spaceError ?? new Error("space insert failed")
 
-      const { data: suggestion, error: suggestionError } = await db
+      const { data: suggestion, error: suggestionError } = await supabase
         .from("suggestions")
         .insert({
           space_id: space.id,
@@ -186,7 +193,7 @@ export default function DemoPage() {
           </p>
           <h1 className="text-3xl font-bold tracking-tight">部屋と収納の余白を写す</h1>
           <p className="text-sm leading-6 text-[#6E5A4B]">
-            「部屋全体」「収納スペース」の2枚を撮影してください。
+            「部屋全体」「収納スペース」のどちらか1枚から送れます。2枚あると提案の精度が上がります。
           </p>
         </div>
 
@@ -233,8 +240,14 @@ export default function DemoPage() {
         <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 text-sm shadow-sm">
           {hasBothPhotos ? (
             <p className="font-semibold text-[#2D7C62]">2枚とも撮影できました</p>
+          ) : hasAnyPhoto ? (
+            <p className="text-[#8B7360]">
+              {roomPhoto
+                ? "部屋全体の写真だけで提案します。収納スペースも撮ると精度が上がります"
+                : "収納スペースの写真だけで提案します。部屋全体も撮ると精度が上がります"}
+            </p>
           ) : (
-            <p className="text-[#8B7360]">2枚とも撮影すると提案に進めます</p>
+            <p className="text-[#8B7360]">どちらか1枚を撮影すると提案に進めます</p>
           )}
         </div>
 
@@ -245,7 +258,7 @@ export default function DemoPage() {
         <div className="space-y-3">
           <button
             onClick={handleAnalyze}
-            disabled={!hasBothPhotos}
+            disabled={!hasAnyPhoto}
             className="w-full rounded-lg bg-[#D96B2D] py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20] disabled:bg-[#E1CDB9] disabled:text-[#9B806C]"
           >
             提案を見る

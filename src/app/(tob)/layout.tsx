@@ -1,12 +1,12 @@
 import type { ReactNode } from "react"
 import { createClient } from "@/lib/supabase/server"
+import { isAdminEmail } from "@/lib/supabase/admin"
 
 export default async function ToBLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim())
-  const isAdmin = user && adminEmails.includes(user.email ?? "")
+  const isAdmin = isAdminEmail(user?.email)
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">

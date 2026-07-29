@@ -4,8 +4,7 @@ import Link from "next/link"
 export default async function BWorkspacePage() {
   const supabase = await createClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
+  const db = supabase
   const { data: scans } = await db
     .from("b_scans")
     .select("id, area_name, status, created_at")

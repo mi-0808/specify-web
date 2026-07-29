@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient, ADMIN_EMAILS } from "@/lib/supabase/admin"
+import { createAdminClient, isAdminEmail } from "@/lib/supabase/admin"
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user?.email || !ADMIN_EMAILS.includes(user.email)) {
+  if (!isAdminEmail(user?.email)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -15,8 +15,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = createAdminClient() as any
+  const db = createAdminClient()
 
   if (markers.length > 0) {
     const rows = markers.map(

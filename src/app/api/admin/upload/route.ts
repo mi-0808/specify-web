@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient, ADMIN_EMAILS } from "@/lib/supabase/admin"
+import { createAdminClient, isAdminEmail } from "@/lib/supabase/admin"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user?.email || !ADMIN_EMAILS.includes(user.email)) {
+  if (!isAdminEmail(user?.email)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -35,8 +35,7 @@ export async function POST(request: NextRequest) {
     .from("specify-images")
     .getPublicUrl(path)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = adminClient as any
+  const db = adminClient
   const { error: updateError } = await db
     .from("suggestions")
     .update({

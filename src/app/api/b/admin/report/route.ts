@@ -1,33 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
-
-async function sendUserEmail(to: string, areaName: string, reportUrl: string) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return
-
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: "Specify <onboarding@resend.dev>",
-      to,
-      subject: `【Specify】現場レポートが届きました：${areaName}`,
-      html: `<p>現場レポートが完成しました。</p><p>エリア: <strong>${areaName}</strong></p><p><a href="${reportUrl}">レポートを確認する</a></p>`,
-    }),
-  }).catch(() => {})
-}
+import { createAdminClient, isAdminEmail } from "@/lib/supabase/admin"
+import { buildReportNotification, sendEmail } from "@/lib/email"
 
 export async function POST(req: NextRequest) {
   // ログインユーザーの確認（anon keyで）
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim())
-  if (!user || !adminEmails.includes(user.email ?? "")) {
+  if (!isAdminEmail(user?.email)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 })
   }
 
@@ -37,8 +18,7 @@ export async function POST(req: NextRequest) {
   }
 
   // DB操作はservice role keyで（RLSをバイパス）
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = createAdminClient() as any
+  const db = createAdminClient()
 
   const { data: scan, error: scanError } = await db
     .from("b_scans")
@@ -71,11 +51,15 @@ export async function POST(req: NextRequest) {
   // スキャンをdoneに更新
   await db.from("b_scans").update({ status: "done" }).eq("id", scan_id)
 
-  // 担当者のメールアドレスを取得して通知
+  // 担当者のメールアドレスを取得して通知（after()でレスポンス後に確実に送る）
   const { data: userData } = await db.auth.admin.getUserById(scan.user_id)
-  if (userData?.user?.email) {
+  const recipient = userData?.user?.email
+  if (recipient) {
     const reportUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/b/report/${scan_id}`
-    sendUserEmail(userData.user.email, scan.area_name, reportUrl)
+    const { subject, html } = buildReportNotification(scan.area_name, reportUrl)
+    after(() => sendEmail({ to: recipient, subject, html }))
+  } else {
+    console.warn(`[b/admin/report] 担当者のメールアドレスが取得できず通知をスキップ: scan=${scan_id}`)
   }
 
   return NextResponse.json({ ok: true })

@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 type Step = "input" | "capture" | "sent"
+type SendState = "sending" | "ok" | "error"
 
 export default function BScanPage() {
   const [step, setStep] = useState<Step>("input")
   const [areaName, setAreaName] = useState("")
   const [photo, setPhoto] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
-  const [submitting, setSubmitting] = useState(false)
+  const [sendState, setSendState] = useState<SendState>("sending")
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -29,10 +29,18 @@ export default function BScanPage() {
     e.target.value = ""
   }
 
-  async function handleSubmit() {
+  // 送信完了画面を先に出し、アップロードはバックグラウンドで進める（仕様書 5-3）
+  function handleSubmit() {
     if (!photo || !file) return
-    setSubmitting(true)
     setError("")
+    setSendState("sending")
+    setStep("sent")
+    void sendScan(photo)
+  }
+
+  async function sendScan(imageBase64: string) {
+    // ブラウザクライアントはユーザー操作時に生成する（ビルド時のprerenderで環境変数を要求しないため）
+    const supabase = createClient()
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -41,55 +49,83 @@ export default function BScanPage() {
         return
       }
 
-      const reader = new FileReader()
-      const imageBase64 = await new Promise<string>((resolve) => {
-        reader.onload = () => resolve(reader.result as string)
-        reader.readAsDataURL(file)
-      })
-
       const res = await fetch("/api/b/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ area_name: areaName, image: imageBase64 }),
       })
 
-      if (!res.ok) throw new Error("送信に失敗しました")
+      if (!res.ok) throw new Error(`送信に失敗しました (${res.status})`)
 
-      setStep("sent")
-    } catch {
+      setSendState("ok")
+    } catch (err) {
+      console.error(err)
+      setSendState("error")
       setError("送信に失敗しました。時間をおいてもう一度お試しください。")
-    } finally {
-      setSubmitting(false)
     }
   }
 
   if (step === "sent") {
+    const failed = sendState === "error"
+
     return (
       <main className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
         <div className="max-w-sm w-full space-y-6">
-          <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-green-100 text-3xl">
-            ✅
+          <div
+            className={`flex h-16 w-16 mx-auto items-center justify-center rounded-full text-3xl ${
+              failed ? "bg-red-100" : "bg-green-100"
+            }`}
+          >
+            {failed ? "⚠️" : "✅"}
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-slate-900">送信しました</h1>
-            <p className="text-sm text-slate-500 leading-6">
-              レポートが完成次第、登録メールアドレスにお知らせします。
-              <br />この画面は閉じていただいて構いません。
-            </p>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {failed ? "送信できませんでした" : "送信しました"}
+            </h1>
+            {failed ? (
+              <p className="text-sm text-red-500 leading-6">{error}</p>
+            ) : (
+              <p className="text-sm text-slate-500 leading-6">
+                レポートが完成次第、登録メールアドレスにお知らせします。
+                <br />この画面は閉じていただいて構いません。
+              </p>
+            )}
+            {sendState === "sending" && (
+              <p className="text-xs text-slate-400">写真をアップロード中...</p>
+            )}
           </div>
           <div className="space-y-3">
-            <button
-              onClick={() => router.push("/b/workspace")}
-              className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-            >
-              エリア一覧に戻る
-            </button>
-            <button
-              onClick={() => { setStep("input"); setAreaName(""); setPhoto(null); setFile(null) }}
-              className="w-full py-2 text-sm text-slate-400"
-            >
-              続けて撮影する
-            </button>
+            {failed ? (
+              <>
+                <button
+                  onClick={() => photo && (setSendState("sending"), setError(""), void sendScan(photo))}
+                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  もう一度送信する
+                </button>
+                <button
+                  onClick={() => setStep("capture")}
+                  className="w-full py-2 text-sm text-slate-400"
+                >
+                  撮影画面に戻る
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push("/b/workspace")}
+                  className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  エリア一覧に戻る
+                </button>
+                <button
+                  onClick={() => { setStep("input"); setAreaName(""); setPhoto(null); setFile(null) }}
+                  className="w-full py-2 text-sm text-slate-400"
+                >
+                  続けて撮影する
+                </button>
+              </>
+            )}
           </div>
         </div>
       </main>
@@ -111,6 +147,7 @@ export default function BScanPage() {
             <p className="text-xs font-semibold text-blue-600">Step 2 / 2</p>
             <h1 className="text-2xl font-bold text-slate-900">「{areaName}」を撮影</h1>
             <p className="text-sm text-slate-500">エリア全体が写るよう、少し離れて撮影してください。</p>
+            <p className="text-sm text-slate-500">明るい場所で撮影すると分析精度が上がります。</p>
           </div>
 
           <div
@@ -154,10 +191,10 @@ export default function BScanPage() {
 
           <button
             onClick={handleSubmit}
-            disabled={!photo || submitting}
+            disabled={!photo}
             className="w-full rounded-xl bg-blue-600 py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400"
           >
-            {submitting ? "送信中..." : "この写真で送信する"}
+            この写真で送信する
           </button>
         </div>
       </main>

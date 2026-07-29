@@ -10,8 +10,7 @@ export async function GET(req: NextRequest) {
   const scanId = req.nextUrl.searchParams.get("scan_id")
   if (!scanId) return NextResponse.json({ error: "scan_id required" }, { status: 400 })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
+  const db = supabase
 
   const { data: scan, error } = await db
     .from("b_scans")

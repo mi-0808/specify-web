@@ -101,12 +101,12 @@ export default function ARTestScene() {
 
     const clientX =
       "touches" in e
-        ? (e.touches[0]?.clientX ?? (e as any).changedTouches[0]?.clientX)
-        : (e as React.MouseEvent).clientX
+        ? (e.touches[0]?.clientX ?? e.changedTouches[0]?.clientX)
+        : e.clientX
     const clientY =
       "touches" in e
-        ? (e.touches[0]?.clientY ?? (e as any).changedTouches[0]?.clientY)
-        : (e as React.MouseEvent).clientY
+        ? (e.touches[0]?.clientY ?? e.changedTouches[0]?.clientY)
+        : e.clientY
 
     if (clientX == null || clientY == null) return
 

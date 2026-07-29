@@ -30,10 +30,14 @@ ALTER TABLE b_scans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE b_markers ENABLE ROW LEVEL SECURITY;
 
 -- b_scans: 本人のみ読み書き
+DROP POLICY IF EXISTS "b_scans_owner" ON b_scans;
 CREATE POLICY "b_scans_owner" ON b_scans
-  FOR ALL USING (auth.uid() = user_id);
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 -- b_markers: 本人のスキャンに紐づくものは読み取り可、書き込みはservice_role（管理者API）のみ
+DROP POLICY IF EXISTS "b_markers_read_owner" ON b_markers;
 CREATE POLICY "b_markers_read_owner" ON b_markers
   FOR SELECT USING (
     scan_id IN (SELECT id FROM b_scans WHERE user_id = auth.uid())

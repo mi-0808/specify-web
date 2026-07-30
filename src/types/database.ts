@@ -25,6 +25,7 @@ export interface Database {
           display_name?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       spaces: {
         Row: {
@@ -58,6 +59,7 @@ export interface Database {
           image_url?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       items: {
         Row: {
@@ -93,6 +95,7 @@ export interface Database {
           category?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       suggestions: {
         Row: {
@@ -137,6 +140,40 @@ export interface Database {
           status?: string;
           created_at?: string;
         };
+        Relationships: [];
+      };
+      suggestion_markers: {
+        Row: {
+          id: string;
+          suggestion_id: string;
+          image_type: string;
+          x: number;
+          y: number;
+          comment: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          suggestion_id: string;
+          image_type: string;
+          x: number;
+          y: number;
+          comment: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          suggestion_id?: string;
+          image_type?: string;
+          x?: number;
+          y?: number;
+          comment?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       b_scans: {
         Row: {
@@ -163,6 +200,7 @@ export interface Database {
           status?: string;
           created_at?: string;
         };
+        Relationships: [];
       };
       b_markers: {
         Row: {
@@ -195,7 +233,12 @@ export interface Database {
           sort_order?: number;
           created_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: { [_ in never]: never };
+    Functions: { [_ in never]: never };
+    Enums: { [_ in never]: never };
+    CompositeTypes: { [_ in never]: never };
   };
 }

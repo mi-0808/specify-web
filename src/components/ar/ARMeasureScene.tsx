@@ -4,10 +4,33 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { calcDimensions, type Point3D, type SpaceDimensions } from "@/lib/webxr/measure"
 
 // XR8 グローバル型（バイナリ読み込み後にwindowに追加される）
+// 本コンポーネントで使う範囲だけを最小構成で宣言する
+interface XR8PipelineModule {
+  name?: string
+  onStart?: () => void
+}
+
+interface XR8Api {
+  XrController: {
+    configure(options: { enableLighting: boolean }): void
+    pipelineModule(): XR8PipelineModule
+    hitTest(
+      x: number,
+      y: number,
+      options: { floorOnly: boolean; preferredSurfaces: string[] }
+    ): { position: Point3D } | null
+  }
+  GlTextureRenderer: { pipelineModule(): XR8PipelineModule }
+  XrConfig: { device(): { ANY: unknown } }
+  addCameraPipelineModules(modules: XR8PipelineModule[]): void
+  run(options: { canvas: HTMLCanvasElement; allowedDevices: unknown }): void
+  stop(): void
+}
+
 declare global {
   interface Window {
-    XR8: any
-    XRExtras: any
+    XR8: XR8Api
+    XRExtras: unknown
   }
 }
 

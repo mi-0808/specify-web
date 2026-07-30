@@ -38,38 +38,40 @@ AR計測（4隅タップによる寸法取得）はMVPのコア体験ではな�
 
 ### `/demo`（撮影→提案フロー）
 
-3つの内部ステップ（`intro` → `capture` → `result`）を持つ単一ページとして実装する。
+3つの内部ステップ（`shoot` → `submitting` → `sent`）を持つ単一ページとして実装する。
+解析結果は同一画面では待たず、`/demo/waiting/[id]` で待つ。
 
 | ステップ | 要素 | 状態 |
 |---|---|---|
-| `intro` | フロー説明、「撮影を始める」ボタン | 初期表示 |
-| `capture` | カメラプレビュー、部屋全体と収納スペースの撮影、撮影ボタン、スキップボタン | 権限許可待ち / 撮影中 / 撮影済みプレビュー |
-| `analyzing` | ローディング表示（`POST /api/analyze` 待機） | 解析中 / タイムアウト |
-| `result` | AI提案カード（対象物・収納先・理由）、「もう一度撮る」ボタン、「ダッシュボードに保存」ボタン | 提案成功 / 提案失敗（リトライ導線） |
+| `shoot` | 部屋全体・収納スペースの撮影（どちらか1枚でOK）、「提案を見る」ボタン | 未撮影 / 片方のみ / 2枚 |
+| `submitting` | 送信中のローディング表示（Storageアップロード＋レコード作成） | 送信中 |
+| `sent` | 送信完了。「提案を確認する」で `/demo/waiting/[id]` へ | 送信成功 / 送信失敗（`shoot` に戻してリトライ） |
 
-- **遷移**：`intro` → `capture` → `analyzing` → `result`。`result` から「ダッシュボードに保存」で `/dashboard` へ遷移（未ログイン時は `/login` を経由）
+- **遷移**：`shoot` → `submitting` → `sent` → `/demo/waiting/[id]`。
+  `waiting` で `status = 'done'` になると提案が表示され、「保存する」で `/dashboard` へ遷移する。
+  `status = 'failed'` の場合は撮り直し導線を出す。
 
-#### `capture` の撮影対象
+#### `shoot` の撮影対象
 
 - 「部屋全体」と「収納スペース」の2種類
 - どちらか1枚以上あれば提案に進める（両方必須ではない）
 - 両方撮ると提案の質が上がる旨をUIで促す
 
-#### `capture` の撮影ステップ
+#### `shoot` の撮影パターン
 
-##### Step1-A: 部屋全体を撮る
+##### 部屋全体を撮る
 
 - 任意（スキップ可）
 - スキップ時は「収納スペースだけで提案します」と表示
 
-##### Step1-B: 収納スペースを撮る
+##### 収納スペースを撮る
 
 - 任意（スキップ可）
 - スキップ時は「部屋全体の写真で提案します」と表示
 
 ※ 両方スキップは不可。どちらか1枚は必須。
 
-#### `capture` の状態管理
+#### `shoot` の状態管理
 
 ```typescript
 const [roomPhoto, setRoomPhoto] = useState<string | null>(null)       // 部屋全体
@@ -89,59 +91,104 @@ const [storagePhoto, setStoragePhoto] = useState<string | null>(null) // 収納�
 
 ### `POST /api/analyze`
 
-#### オズの魔法使い実装
+写真をAI（OpenAI `gpt-4o`）に渡し、改善方針と提案リストを生成して `suggestions` 行を更新する。
+`/demo` からはレスポンスを待たずに非同期でキックされ、担当者は `/demo/waiting/[id]` で結果を待つ。
 
-- AIは使わない
-- 固定の提案テキスト3件を返すだけ
-- リクエストは受け取るが中身は見ない
+**リクエスト**
 
 ```typescript
-// app/api/analyze/route.ts
-export async function POST() {
-  return Response.json({
-    suggestions: [
-      { target: "冬物のコート", location: "押入れの上段", reason: "使用頻度が低いものは上段にまとめると動線がスッキリします" },
-      { target: "季節外の寝具", location: "圧縮袋に入れてクローゼット奥", reason: "圧縮袋で体積を減らすと収納スペースを大幅に確保できます" },
-      { target: "床に置いてある小物", location: "引き出しや収納ボックスの中", reason: "床面積を空けると部屋全体がスッキリ見えます" },
-    ]
-  })
+{
+  suggestion_id: string
+  room_image_url: string | null      // 部屋全体（スキップ時は null）
+  storage_image_url: string | null   // 収納スペース（スキップ時は null）
 }
 ```
 
+`room_image_url` / `storage_image_url` はどちらか一方が `null` でもよい（渡された写真だけで解析する）。
+両方 `null` の場合は 400 を返す。
+
+**副作用**：`suggestions` の `reasoning` / `storage_options` / `raw_json` / `status` を更新する。
+成功時は `status = 'analyzing'`、AI呼び出しやJSONパースに失敗した場合は `status = 'failed'` にする。
+
+### 完成イメージ画像の生成（`src/lib/result-image.ts`）
+
+`reasoning` を元に DALL·E 3 で完成イメージ画像を生成し、Storage に保存して
+`suggestions.result_image_url` と `status = 'done'` を更新する。
+`/api/analyze` のレスポンス後（`after()`）に内部関数として呼ぶ。
+
+以前は `POST /api/generate` というエンドポイントだったが、
+認証なしで課金APIを叩けてしまう点と、サーバー間fetchではセッションが無くRLSに弾かれる点から、
+HTTPホップを廃止して service role key を使う内部モジュールに変更した。
+画像生成に失敗した場合も提案テキストは配信したいので `status = 'done'` にする。
+
+### `POST /api/admin/upload`（管理者のみ）
+
+WoZ用。管理者が手動で作成した結果画像をアップロードし、`result_image_url` / `status = 'done'` を更新する。
+
+### `POST /api/admin/report`（管理者のみ）
+
+WoZ用。写真上のマーカー（`suggestion_markers`）を保存し、`status = 'done'` に更新する。
+
 ---
 
-## 5. DBスキーマ変更
+## 5. DBスキーマ
 
-既存の `suggestions` テーブルは `score` / `reasoning` / `storage_options`（Json）を持つが、画像URLと撮影場所タグを保持できないため最小限のカラムを追加する。
+`suggestions` は元々 `score` / `reasoning` / `storage_options`（Json）のみだったため、
+写真URL・AI生出力・進行ステータスを保持するカラムを追加している
+（`supabase/migrations/20260627095401_add_suggestions_image_markup_columns.sql` /
+`20260730000706_add_suggestions_image_tag_raw_json.sql`）。
 
 ```sql
--- suggestionsテーブルへの最小限のカラム追加
-
 ALTER TABLE suggestions
-  ADD COLUMN image_url text,
-  ADD COLUMN location_tag text CHECK (location_tag IN ('closet', 'oshiire', 'other')),
-  ADD COLUMN summary text;
+  ADD COLUMN IF NOT EXISTS image_tag text,
+  ADD COLUMN IF NOT EXISTS raw_json jsonb,
+  ADD COLUMN IF NOT EXISTS room_image_url text,
+  ADD COLUMN IF NOT EXISTS storage_image_url text,
+  ADD COLUMN IF NOT EXISTS result_image_url text,
+  ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
 ```
 
-- `image_url`：撮影画像の保存先URL（Supabase Storage）。未保存（オプトアウト）の場合は `null`
-- `location_tag`：撮影場所タグ。スキップ時は `null`
-- `summary`：AI提案の総括コメント（`AnalyzeResponse.summary` に対応）
+- `room_image_url` / `storage_image_url`：撮影画像の保存先URL（Supabase Storage）。スキップ時は `null`
+- `result_image_url`：AI生成 or 管理者がアップロードした完成イメージ画像
+- `status`：`pending`（受付） → `analyzing`（AI解析済み・画像生成待ち） → `done`（提示可能） / `failed`（解析失敗）
+- `raw_json`：AIの生レスポンス（デバッグ・後からの再解釈用）
+- `storage_options`：`StorageOption[]`（対象物・収納先・理由）をJsonとして格納
 
-`storage_options` 列は既存の `Json` 型のまま `StorageOption[]` を格納する用途で流用する。
+写真上のマーカーは別テーブルに持つ（`supabase/migrations/20260714025118_add_suggestion_markers.sql`）。
+
+```sql
+CREATE TABLE suggestion_markers (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  suggestion_id  uuid NOT NULL REFERENCES suggestions(id) ON DELETE CASCADE,
+  image_type     text NOT NULL CHECK (image_type IN ('room', 'storage')),
+  x              float NOT NULL,   -- 0〜1
+  y              float NOT NULL,   -- 0〜1
+  comment        text NOT NULL,
+  sort_order     int NOT NULL DEFAULT 0,
+  created_at     timestamptz DEFAULT now()
+);
+```
+
+RLSは `20260616025745_enable_rls_policies.sql`（ToC）と `20260708155650_create_tob_tables.sql`（ToB）、
+`20260714025118_add_suggestion_markers.sql` で有効化されている。
+`spaces` は本人のみ、`suggestions` は自分の `spaces` に紐づくものだけ、
+`suggestion_markers` は読み取りのみ（書き込みは service role key を使う管理者APIに限定）。
 
 ---
 
-## 6. 実装順序
+## 6. 実装状況
 
-① `POST /api/analyze` エンドポイントを実装する（リクエストは受け取るが中身は見ず、4章の固定提案3件を返す）
+| # | 内容 | 状態 |
+|---|---|---|
+| ① | `POST /api/analyze`（当初はWoZの固定文、現在はgpt-4oによる解析） | 実装済み |
+| ② | `suggestions` のカラム追加と `src/types/database.ts` の型更新 | 実装済み |
+| ③ | `/demo` を撮影フローに置き換え（AR計測コードは参照しない） | 実装済み（`shoot` → `submitting` → `sent` の3ステップ） |
+| ④ | 撮影画像を `/api/analyze` に送信し結果を表示 | 実装済み（結果は `/demo/waiting/[id]` で表示） |
+| ⑤ | `spaces` / `suggestions` への保存と `/dashboard` の履歴表示 | 実装済み |
 
-② `suggestions` テーブルに5章のALTER TABLEを適用し、`src/types/database.ts` の型を更新する
-
-③ `/demo` を `intro` → `capture` → `analyzing` → `result` の4ステップ構成に置き換える（既存のAR計測コード・`ARMeasureScene` 呼び出しは削除し、`getUserMedia` ベースの単純な撮影UIに差し替える）
-
-④ `capture` ステップで撮影した画像を `/api/analyze` に送信し、`result` ステップでレスポンスを表示する
-
-⑤ `result` ステップの「ダッシュボードに保存」から `spaces` / `suggestions` への保存処理を実装し、`/dashboard` で一覧・履歴表示に対応させる
+※ ③④は当初案の `intro` → `capture` → `analyzing` → `result` ではなく、
+送信完了を即座に返して結果を別画面（`/demo/waiting/[id]`）で待つ構成に変更した。
+AIの解析＋画像生成に時間がかかり、同一画面で待たせるとタイムアウトしやすいため。
 
 ---
 

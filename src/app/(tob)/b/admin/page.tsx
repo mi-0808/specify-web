@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient, isAdminEmail } from "@/lib/supabase/admin"
 import { redirect } from "next/navigation"
 import BAdminPanel from "./BAdminPanel"
 
@@ -6,13 +7,12 @@ export default async function BAdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim())
-  if (!user || !adminEmails.includes(user.email ?? "")) {
+  if (!isAdminEmail(user?.email)) {
     redirect("/b/workspace")
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any
+  // 他ユーザーのスキャンを一覧するためRLSをバイパスする（管理者確認済み）
+  const db = createAdminClient()
 
   const { data: pending } = await db
     .from("b_scans")

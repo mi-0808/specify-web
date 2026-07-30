@@ -26,6 +26,10 @@ const CATEGORY_CONFIG: Record<Category, { label: string; bg: string; border: str
   suggestion: { label: "🔵 改善提案", bg: "bg-blue-500", border: "border-blue-300" },
 }
 
+function isCategory(value: unknown): value is Category {
+  return value === "safety" || value === "flow" || value === "suggestion"
+}
+
 const TEMPLATES: Record<Category, string[]> = {
   safety: [
     "通路に物が出ており、緊急時の避難経路を妨げる可能性があります",
@@ -96,11 +100,12 @@ export default function BAdminPanel({
       })
       const data = await res.json()
       if (data.markers?.length) {
-        setMarkers(data.markers.map((m: { x: number; y: number; category: Category; comment: string }) => ({
+        setMarkers(data.markers.map((m: { x: number; y: number; category?: string; comment: string }) => ({
           id: crypto.randomUUID(),
           x: m.x,
           y: m.y,
-          category: m.category ?? "suggestion",
+          // AIが未知のカテゴリを返すとCATEGORY_CONFIGの参照でクラッシュするため許可リストで丸める
+          category: isCategory(m.category) ? m.category : "suggestion",
           comment: m.comment,
         })))
       } else {
@@ -115,6 +120,10 @@ export default function BAdminPanel({
 
   async function handleSend() {
     if (!selectedScan) return
+    if (markers.length === 0) {
+      setError("マーカーを1つ以上追加してください")
+      return
+    }
     const incomplete = markers.some((m) => !m.comment.trim())
     if (incomplete) {
       setError("すべてのマーカーにコメントを入力してください")

@@ -29,7 +29,8 @@ export async function sendEmail({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM ?? DEFAULT_FROM,
+        // 空文字が設定されているケースもフォールバックさせる（?? では空文字が通ってしまう）
+        from: process.env.RESEND_FROM || DEFAULT_FROM,
         to,
         subject,
         html,

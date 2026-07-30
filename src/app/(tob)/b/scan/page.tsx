@@ -15,6 +15,9 @@ export default function BScanPage() {
   const [sendState, setSendState] = useState<SendState>("sending")
   const [error, setError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // 「続けて撮影する」で複数回送信したとき、古い送信の遅延応答が
+  // 現在の画面状態を上書きしないように送信ごとの識別子を持つ
+  const sendIdRef = useRef(0)
   const router = useRouter()
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -35,10 +38,13 @@ export default function BScanPage() {
     setError("")
     setSendState("sending")
     setStep("sent")
-    void sendScan(photo)
+    void sendScan(photo, areaName)
   }
 
-  async function sendScan(imageBase64: string) {
+  async function sendScan(imageBase64: string, areaNameToSend: string) {
+    const sendId = ++sendIdRef.current
+    const isLatest = () => sendIdRef.current === sendId
+
     // ブラウザクライアントはユーザー操作時に生成する（ビルド時のprerenderで環境変数を要求しないため）
     const supabase = createClient()
 
@@ -52,16 +58,18 @@ export default function BScanPage() {
       const res = await fetch("/api/b/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ area_name: areaName, image: imageBase64 }),
+        body: JSON.stringify({ area_name: areaNameToSend, image: imageBase64 }),
       })
 
       if (!res.ok) throw new Error(`送信に失敗しました (${res.status})`)
 
-      setSendState("ok")
+      if (isLatest()) setSendState("ok")
     } catch (err) {
       console.error(err)
-      setSendState("error")
-      setError("送信に失敗しました。時間をおいてもう一度お試しください。")
+      if (isLatest()) {
+        setSendState("error")
+        setError("送信に失敗しました。時間をおいてもう一度お試しください。")
+      }
     }
   }
 
@@ -98,7 +106,7 @@ export default function BScanPage() {
             {failed ? (
               <>
                 <button
-                  onClick={() => photo && (setSendState("sending"), setError(""), void sendScan(photo))}
+                  onClick={() => photo && (setSendState("sending"), setError(""), void sendScan(photo, areaName))}
                   className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
                 >
                   もう一度送信する

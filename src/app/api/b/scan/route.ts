@@ -9,7 +9,10 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { area_name, image } = await req.json()
+  // 不正なJSONでも未捕捉例外にせず400で返す
+  const body = await req.json().catch(() => null)
+  const area_name = typeof body?.area_name === "string" ? body.area_name.trim() : ""
+  const image = typeof body?.image === "string" ? body.image : ""
   if (!area_name || !image) {
     return NextResponse.json({ error: "area_name and image are required" }, { status: 400 })
   }
@@ -37,6 +40,11 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (scanError || !scan) {
+    // 参照されない画像がStorageに残り続けないように後始末する
+    await supabase.storage
+      .from("specify-images")
+      .remove([path])
+      .catch(() => {})
     return NextResponse.json({ error: "scan insert failed" }, { status: 500 })
   }
 

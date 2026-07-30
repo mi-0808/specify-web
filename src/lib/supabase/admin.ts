@@ -11,7 +11,10 @@ export function getAdminEmails(): string[] {
 
 export function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return getAdminEmails().includes(email);
+  // メールアドレスの大文字小文字で管理者判定が変わらないようにする
+  // （Supabase側は小文字で保持するため、ADMIN_EMAILSに大文字で書くと弾かれてしまう）
+  const normalized = email.trim().toLowerCase();
+  return getAdminEmails().some((allowed) => allowed.toLowerCase() === normalized);
 }
 
 export function createAdminClient() {

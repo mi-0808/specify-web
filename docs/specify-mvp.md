@@ -135,7 +135,8 @@ WoZ用。写真上のマーカー（`suggestion_markers`）を保存し、`statu
 
 `suggestions` は元々 `score` / `reasoning` / `storage_options`（Json）のみだったため、
 写真URL・AI生出力・進行ステータスを保持するカラムを追加している
-（`supabase/migrations/20260627000000_*` / `20260627010000_*`）。
+（`supabase/migrations/20260627095401_add_suggestions_image_markup_columns.sql` /
+`20260730000706_add_suggestions_image_tag_raw_json.sql`）。
 
 ```sql
 ALTER TABLE suggestions
@@ -153,7 +154,7 @@ ALTER TABLE suggestions
 - `raw_json`：AIの生レスポンス（デバッグ・後からの再解釈用）
 - `storage_options`：`StorageOption[]`（対象物・収納先・理由）をJsonとして格納
 
-写真上のマーカーは別テーブルに持つ（`supabase/migrations/20260709000000_create_suggestion_markers.sql`）。
+写真上のマーカーは別テーブルに持つ（`supabase/migrations/20260714025118_add_suggestion_markers.sql`）。
 
 ```sql
 CREATE TABLE suggestion_markers (
@@ -168,7 +169,8 @@ CREATE TABLE suggestion_markers (
 );
 ```
 
-RLSは `20260709010000_enable_rls_core_tables.sql` で有効化する。
+RLSは `20260616025745_enable_rls_policies.sql`（ToC）と `20260708155650_create_tob_tables.sql`（ToB）、
+`20260714025118_add_suggestion_markers.sql` で有効化されている。
 `spaces` は本人のみ、`suggestions` は自分の `spaces` に紐づくものだけ、
 `suggestion_markers` は読み取りのみ（書き込みは service role key を使う管理者APIに限定）。
 

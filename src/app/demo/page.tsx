@@ -31,13 +31,24 @@ export default function DemoPage() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    setFile(file)
+    // 読み込みが成功してプレビューが出せたときだけ送信対象として確定させる
+    // （先にsetFileすると、読めなかった写真がプレビューなしで送信されてしまう）
     const reader = new FileReader()
     reader.onload = () => {
       if (typeof reader.result === "string") {
         setPhoto(reader.result)
+        setFile(file)
         setErrorMessage("")
+      } else {
+        setPhoto(null)
+        setFile(null)
+        setErrorMessage("写真を読み込めませんでした。別の写真をお試しください。")
       }
+    }
+    reader.onerror = () => {
+      setPhoto(null)
+      setFile(null)
+      setErrorMessage("写真を読み込めませんでした。別の写真をお試しください。")
     }
     reader.readAsDataURL(file)
     event.target.value = ""

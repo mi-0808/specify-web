@@ -41,13 +41,27 @@ export async function generateResultImage({
 
     const { data } = db.storage.from("specify-images").getPublicUrl(path)
 
-    await db
+    const { error: updateError } = await db
       .from("suggestions")
       .update({ result_image_url: data.publicUrl, status: "done" })
       .eq("id", suggestionId)
+    // 更新が通らないと status が analyzing のまま残り、UIが永久に生成中表示になる
+    if (updateError) throw updateError
   } catch (error) {
     // 画像がなくても提案テキストは見せられるので done にして届ける
     console.error(`[result-image] 画像生成に失敗: suggestion=${suggestionId}`, error)
-    await db.from("suggestions").update({ status: "done" }).eq("id", suggestionId)
+    try {
+      const { error: fallbackError } = await db
+        .from("suggestions")
+        .update({ status: "done" })
+        .eq("id", suggestionId)
+      if (fallbackError) throw fallbackError
+    } catch (fallbackError) {
+      // ここで投げると after() 内で未処理のPromise拒否になるためログに留める
+      console.error(
+        `[result-image] statusをdoneにできませんでした: suggestion=${suggestionId}`,
+        fallbackError
+      )
+    }
   }
 }

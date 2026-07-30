@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminEmail } from "@/lib/supabase/admin"
+import { parseMarkerArray } from "@/lib/ai-markers"
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -55,12 +56,9 @@ JSONの配列のみ返してください。説明文・マークダウン記法�
   const json = await res.json()
   const text: string = json.choices?.[0]?.message?.content ?? ""
 
-  try {
-    const match = text.match(/\[[\s\S]*\]/)
-    const markers = JSON.parse(match ? match[0] : text)
-    return NextResponse.json({ markers })
-  } catch {
+  const markers = parseMarkerArray(text)
+  if (markers.length === 0 && text.trim()) {
     console.error("parse error:", text)
-    return NextResponse.json({ markers: [] })
   }
+  return NextResponse.json({ markers })
 }

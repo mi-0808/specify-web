@@ -108,7 +108,6 @@ export interface Database {
           raw_json: Json | null;
           room_image_url: string | null;
           storage_image_url: string | null;
-          result_image_url: string | null;
           status: string;
           created_at: string;
         };
@@ -122,7 +121,6 @@ export interface Database {
           raw_json?: Json | null;
           room_image_url?: string | null;
           storage_image_url?: string | null;
-          result_image_url?: string | null;
           status?: string;
           created_at?: string;
         };
@@ -136,7 +134,6 @@ export interface Database {
           raw_json?: Json | null;
           room_image_url?: string | null;
           storage_image_url?: string | null;
-          result_image_url?: string | null;
           status?: string;
           created_at?: string;
         };

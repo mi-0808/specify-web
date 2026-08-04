@@ -120,12 +120,10 @@ const [storagePhoto, setStoragePhoto] = useState<string | null>(null) // 収納�
 イラスト」にしかならず、その人の部屋の After になっていなかったため。視覚的な提示は写真上の
 マーカー（`suggestion_markers`）が担う。`status = 'done'` への遷移は `/api/analyze` 内で行う。
 
-`result_image_url` カラムと閲覧側のフォールバック表示は当面残す
-（`POST /api/admin/upload` から管理者が手動でアップロードする経路が生きているため）。
-
-### `POST /api/admin/upload`（管理者のみ）
-
-WoZ用。管理者が手動で作成した結果画像をアップロードし、`result_image_url` / `status = 'done'` を更新する。
+`result_image_url` カラム・閲覧側のフォールバック表示・`POST /api/admin/upload`（結果画像を
+管理者が手動アップロードするWoZ用ルート）も削除した。当初は手動アップロード経路を残す前提で
+カラムを保持していたが、**そのルートを呼ぶUIが1つも無く**、本番でも一度も値が入っていなかった
+（8行中0行）ため、書き手のいないカラムとして落とした。
 
 ### `POST /api/admin/report`（管理者のみ）
 
@@ -146,14 +144,16 @@ ALTER TABLE suggestions
   ADD COLUMN IF NOT EXISTS raw_json jsonb,
   ADD COLUMN IF NOT EXISTS room_image_url text,
   ADD COLUMN IF NOT EXISTS storage_image_url text,
-  ADD COLUMN IF NOT EXISTS result_image_url text,
   ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
 ```
 
+※ 同マイグレーションは `result_image_url` も追加していたが、完成イメージ画像の廃止に伴い
+`20260804232215_drop_result_image_url.sql` で削除した。
+
 - `room_image_url` / `storage_image_url`：撮影画像の保存先URL（Supabase Storage）。スキップ時は `null`
-- `result_image_url`：管理者がアップロードした完成イメージ画像（AI生成は廃止したので通常は `null`）
 - `status`：`pending`（受付） → `done`（提示可能） / `failed`（解析失敗）。
   `analyzing` は画像生成待ちを表す中間状態だったが、画像生成の廃止で使われなくなった
+  （残っていた行は上記マイグレーションで `done` に寄せた）
 - `raw_json`：AIの生レスポンス（デバッグ・後からの再解釈用）
 - `storage_options`：`StorageOption[]`（対象物・収納先・理由）をJsonとして格納
 

@@ -146,16 +146,6 @@ export default function DemoWaitingPage() {
             </div>
           )}
 
-          {/* 旧来の result_image_url フォールバック */}
-          {suggestion.result_image_url && allMarkers.length === 0 && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={suggestion.result_image_url}
-              alt="収納の改善案"
-              className="w-full rounded-lg border border-[#E8D8C7] bg-white object-cover"
-            />
-          )}
-
           {suggestion.reasoning && (
             <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 text-sm leading-6 text-[#2F2823]">
               {suggestion.reasoning}

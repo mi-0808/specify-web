@@ -148,7 +148,7 @@ ALTER TABLE suggestions
 ```
 
 ※ 同マイグレーションは `result_image_url` も追加していたが、完成イメージ画像の廃止に伴い
-`20260804232215_drop_result_image_url.sql` で削除した。
+`20260804232803_drop_result_image_url.sql` で削除した。
 
 - `room_image_url` / `storage_image_url`：撮影画像の保存先URL（Supabase Storage）。スキップ時は `null`
 - `status`：`pending`（受付） → `done`（提示可能） / `failed`（解析失敗）。

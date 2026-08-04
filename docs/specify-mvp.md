@@ -91,7 +91,8 @@ const [storagePhoto, setStoragePhoto] = useState<string | null>(null) // 収納�
 
 ### `POST /api/analyze`
 
-写真をAI（OpenAI `gpt-4o`）に渡し、改善方針と提案リストを生成して `suggestions` 行を更新する。
+写真をAI（Gemini `gemini-3.6-flash`）に渡し、改善方針と提案リストを生成して `suggestions` 行を更新する。
+呼び出しは `src/lib/gemini.ts` 経由（[docs/ai-gemini-plan.md](ai-gemini-plan.md)）。
 `/demo` からはレスポンスを待たずに非同期でキックされ、担当者は `/demo/waiting/[id]` で結果を待つ。
 
 **リクエスト**
@@ -108,18 +109,19 @@ const [storagePhoto, setStoragePhoto] = useState<string | null>(null) // 収納�
 両方 `null` の場合は 400 を返す。
 
 **副作用**：`suggestions` の `reasoning` / `storage_options` / `raw_json` / `status` を更新する。
-成功時は `status = 'analyzing'`、AI呼び出しやJSONパースに失敗した場合は `status = 'failed'` にする。
+成功時は `status = 'done'`、AI呼び出しやJSONパースに失敗した場合は `status = 'failed'` にする。
 
-### 完成イメージ画像の生成（`src/lib/result-image.ts`）
+### 完成イメージ画像の生成（廃止）
 
-`reasoning` を元に DALL·E 3 で完成イメージ画像を生成し、Storage に保存して
-`suggestions.result_image_url` と `status = 'done'` を更新する。
-`/api/analyze` のレスポンス後（`after()`）に内部関数として呼ぶ。
+以前は `reasoning` を元に DALL·E 3 で完成イメージ画像を生成し（`src/lib/result-image.ts`）、
+`/api/analyze` のレスポンス後（`after()`）に呼んで `status = 'done'` にしていた。
 
-以前は `POST /api/generate` というエンドポイントだったが、
-認証なしで課金APIを叩けてしまう点と、サーバー間fetchではセッションが無くRLSに弾かれる点から、
-HTTPホップを廃止して service role key を使う内部モジュールに変更した。
-画像生成に失敗した場合も提案テキストは配信したいので `status = 'done'` にする。
+**この機能は廃止した。** 元写真を渡せない `images.generate` の制約上、出力が「どこかの綺麗な部屋の
+イラスト」にしかならず、その人の部屋の After になっていなかったため。視覚的な提示は写真上の
+マーカー（`suggestion_markers`）が担う。`status = 'done'` への遷移は `/api/analyze` 内で行う。
+
+`result_image_url` カラムと閲覧側のフォールバック表示は当面残す
+（`POST /api/admin/upload` から管理者が手動でアップロードする経路が生きているため）。
 
 ### `POST /api/admin/upload`（管理者のみ）
 
@@ -149,8 +151,9 @@ ALTER TABLE suggestions
 ```
 
 - `room_image_url` / `storage_image_url`：撮影画像の保存先URL（Supabase Storage）。スキップ時は `null`
-- `result_image_url`：AI生成 or 管理者がアップロードした完成イメージ画像
-- `status`：`pending`（受付） → `analyzing`（AI解析済み・画像生成待ち） → `done`（提示可能） / `failed`（解析失敗）
+- `result_image_url`：管理者がアップロードした完成イメージ画像（AI生成は廃止したので通常は `null`）
+- `status`：`pending`（受付） → `done`（提示可能） / `failed`（解析失敗）。
+  `analyzing` は画像生成待ちを表す中間状態だったが、画像生成の廃止で使われなくなった
 - `raw_json`：AIの生レスポンス（デバッグ・後からの再解釈用）
 - `storage_options`：`StorageOption[]`（対象物・収納先・理由）をJsonとして格納
 
@@ -180,7 +183,7 @@ RLSは `20260616025745_enable_rls_policies.sql`（ToC）と `20260708155650_crea
 
 | # | 内容 | 状態 |
 |---|---|---|
-| ① | `POST /api/analyze`（当初はWoZの固定文、現在はgpt-4oによる解析） | 実装済み |
+| ① | `POST /api/analyze`（当初はWoZの固定文、現在は `gemini-3.6-flash` による解析） | 実装済み・実APIでの疎通確認済み |
 | ② | `suggestions` のカラム追加と `src/types/database.ts` の型更新 | 実装済み |
 | ③ | `/demo` を撮影フローに置き換え（AR計測コードは参照しない） | 実装済み（`shoot` → `submitting` → `sent` の3ステップ） |
 | ④ | 撮影画像を `/api/analyze` に送信し結果を表示 | 実装済み（結果は `/demo/waiting/[id]` で表示） |
@@ -188,7 +191,7 @@ RLSは `20260616025745_enable_rls_policies.sql`（ToC）と `20260708155650_crea
 
 ※ ③④は当初案の `intro` → `capture` → `analyzing` → `result` ではなく、
 送信完了を即座に返して結果を別画面（`/demo/waiting/[id]`）で待つ構成に変更した。
-AIの解析＋画像生成に時間がかかり、同一画面で待たせるとタイムアウトしやすいため。
+AIの解析に時間がかかり、同一画面で待たせるとタイムアウトしやすいため。
 
 ---
 

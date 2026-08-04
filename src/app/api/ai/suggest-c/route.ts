@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { isAdminEmail } from "@/lib/supabase/admin"
 import { parseMarkerArray } from "@/lib/ai-markers"
+import { callGemini, GeminiError } from "@/lib/gemini"
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -15,8 +16,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "image_url required" }, { status: 400 })
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY
-  if (!apiKey) return NextResponse.json({ error: "OPENROUTER_API_KEY not set" }, { status: 500 })
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: "GEMINI_API_KEY not set" }, { status: 500 })
+  }
 
   const prompt = `あなたは収納・片付けの専門家です。
 添付の写真（部屋全体 and/or 収納スペース）を見て、改善できる点を3〜5件指摘してください。
@@ -32,34 +34,17 @@ xとyは各写真上の位置を0〜1の比率で表します（左上が0,0・�
 
 JSONの配列のみ返してください。説明文・マークダウン記法は不要です。`
 
-  const content: object[] = [{ type: "text", text: prompt }]
-  if (room_image_url) {
-    content.push({ type: "image_url", image_url: { url: room_image_url } })
-  }
-  if (storage_image_url) {
-    content.push({ type: "image_url", image_url: { url: storage_image_url } })
-  }
+  // 片方だけの撮影でも解析できるように、渡された画像だけを送る
+  const imageUrls = [room_image_url, storage_image_url].filter(Boolean) as string[]
 
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.0-flash-exp:free",
-      messages: [{ role: "user", content }],
-    }),
-  })
-
-  if (!res.ok) {
-    const err = await res.text()
-    console.error("OpenRouter error:", err)
-    return NextResponse.json({ error: "openrouter error" }, { status: 500 })
+  let text: string
+  try {
+    text = await callGemini({ prompt, imageUrls })
+  } catch (error) {
+    if (!(error instanceof GeminiError)) throw error
+    console.error("Gemini error:", error)
+    return NextResponse.json({ error: "gemini error" }, { status: 500 })
   }
-
-  const json = await res.json()
-  const text: string = json.choices?.[0]?.message?.content ?? ""
 
   const markers = parseMarkerArray(text)
   if (markers.length === 0 && text.trim()) {

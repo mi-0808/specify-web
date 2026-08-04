@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse, after } from "next/server"
-import OpenAI from "openai"
-import type { ChatCompletionContentPart } from "openai/resources/chat/completions"
+import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { generateResultImage } from "@/lib/result-image"
+import { callGemini } from "@/lib/gemini"
+import { jsonCandidates } from "@/lib/ai-markers"
 
 type AnalyzeResult = {
   reasoning: string
@@ -21,14 +20,8 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createClient()
 
-  // 片方だけの撮影でも解析できるように、渡された画像だけをメッセージに含める
-  const imageParts: ChatCompletionContentPart[] = []
-  if (room_image_url) {
-    imageParts.push({ type: "image_url", image_url: { url: room_image_url } })
-  }
-  if (storage_image_url) {
-    imageParts.push({ type: "image_url", image_url: { url: storage_image_url } })
-  }
+  // 片方だけの撮影でも解析できるように、渡された画像だけを送る
+  const imageUrls = [room_image_url, storage_image_url].filter(Boolean) as string[]
 
   const photoDescription =
     room_image_url && storage_image_url
@@ -39,17 +32,8 @@ export async function POST(req: NextRequest) {
 
   let parsed: AnalyzeResult
   try {
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `${photoDescription}を分析して、収納の改善提案をしてください。
+    const raw = await callGemini({
+      prompt: `${photoDescription}を分析して、収納の改善提案をしてください。
 JSON形式で返してください：
 {
   "reasoning": "全体的な改善方針の説明（200字程度）",
@@ -58,15 +42,14 @@ JSON形式で返してください：
   ]
 }
 JSONのみ返してください。`,
-            },
-            ...imageParts,
-          ],
-        },
-      ],
-      max_tokens: 1000,
+      imageUrls,
+      // Geminiのmax_tokensは思考トークンも含めて数える。テキストのみのプロンプトで実測した
+      // ところ、本文394に対し思考が約730消費された（total 1211）。画像2枚だとさらに増えるため、
+      // gpt-4o時代の1000から引き上げて余裕を持たせる。切れるとJSONが壊れてstatus=failedになる。
+      maxTokens: 4000,
     })
 
-    parsed = parseAnalyzeResult(completion.choices[0]?.message.content ?? "")
+    parsed = parseAnalyzeResult(raw)
   } catch (error) {
     console.error(`[analyze] 解析に失敗: suggestion=${suggestion_id}`, error)
     await supabase.from("suggestions").update({ status: "failed" }).eq("id", suggestion_id)
@@ -79,7 +62,9 @@ JSONのみ返してください。`,
       reasoning: parsed.reasoning,
       storage_options: parsed.suggestions,
       raw_json: parsed,
-      status: "analyzing",
+      // 完成イメージ画像の生成を廃止したので、以前 generateResultImage() が担っていた
+      // done への遷移をここで行う。analyzing のまま残すとUIが永久に生成中表示になる。
+      status: "done",
     })
     .eq("id", suggestion_id)
 
@@ -88,25 +73,31 @@ JSONのみ返してください。`,
     return NextResponse.json({ error: "update failed" }, { status: 500 })
   }
 
-  // 完成イメージ画像の生成はレスポンス後に実行する（DALL·Eの応答を担当者に待たせない）
-  const reasoning = parsed.reasoning
-  after(() => generateResultImage({ suggestionId: suggestion_id, reasoning }))
-
   return NextResponse.json({ ok: true })
 }
 
+/**
+ * AIレスポンスから reasoning / suggestions を取り出す。
+ *
+ * プロンプトでJSONのみを求めていても、モデルは前置きや補足文を付けてくる。
+ * 素の JSON.parse だと status=failed が確定保存され、ユーザーには「解析に失敗」が出たまま
+ * リトライもされないため、マーカー提案（`parseMarkerArray()`）と同じく候補を順に試す。
+ */
 function parseAnalyzeResult(raw: string): AnalyzeResult {
-  const cleaned = raw.replace(/```json|```/g, "").trim()
-  const parsed: unknown = JSON.parse(cleaned)
+  for (const candidate of jsonCandidates(raw)) {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(candidate)
+    } catch {
+      continue
+    }
+    if (typeof parsed !== "object" || parsed === null) continue
 
-  if (typeof parsed !== "object" || parsed === null) {
-    throw new Error("AIレスポンスがオブジェクトではありません")
+    const { reasoning, suggestions } = parsed as Partial<AnalyzeResult>
+    if (typeof reasoning !== "string" || !Array.isArray(suggestions)) continue
+
+    return { reasoning, suggestions }
   }
 
-  const { reasoning, suggestions } = parsed as Partial<AnalyzeResult>
-  if (typeof reasoning !== "string" || !Array.isArray(suggestions)) {
-    throw new Error("AIレスポンスに reasoning / suggestions が含まれていません")
-  }
-
-  return { reasoning, suggestions }
+  throw new Error("AIレスポンスから reasoning / suggestions を取り出せませんでした")
 }

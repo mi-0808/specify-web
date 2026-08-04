@@ -19,7 +19,11 @@ export function parseMarkerArray(text: string): unknown[] {
   return []
 }
 
-function jsonCandidates(text: string): string[] {
+/**
+ * テキストからJSONとして解釈できそうな部分文字列の候補を、確度の高い順に返す。
+ * `/api/analyze` のオブジェクト取り出しでも使う。
+ */
+export function jsonCandidates(text: string): string[] {
   // ```json ... ``` のコードフェンスを剥がす
   const unfenced = text.replace(/```(?:json)?/gi, "").trim()
 

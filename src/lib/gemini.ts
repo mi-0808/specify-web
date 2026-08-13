@@ -36,6 +36,9 @@ export function geminiModel(): string {
 /** 画像取得のタイムアウト。応答しないホストにワーカーを占有されないため。 */
 const IMAGE_FETCH_TIMEOUT_MS = 15_000
 
+/** 429/503 リトライ前の待機。Vercel関数の実行時間に収まるよう短めにする。 */
+const RETRY_DELAY_MS = 2_000
+
 /**
  * 取得してよい画像URLか検証する。
  *
@@ -141,18 +144,29 @@ export async function callGemini({
     content.push({ type: "image_url", image_url: { url: await toDataUri(url) } })
   }
 
-  const res = await fetch(GEMINI_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: geminiModel(),
-      messages: [{ role: "user", content }],
-      ...(maxTokens ? { max_tokens: maxTokens } : {}),
-    }),
-  })
+  const request = () =>
+    fetch(GEMINI_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: geminiModel(),
+        messages: [{ role: "user", content }],
+        ...(maxTokens ? { max_tokens: maxTokens } : {}),
+      }),
+    })
+
+  let res = await request()
+
+  // 無料枠は一時的な過負荷(503)・レート超過(429)を返すことがある。
+  // 即failedにするとユーザーに失敗が見えるため、1回だけ待って再試行する。
+  if (res.status === 429 || res.status === 503) {
+    console.warn(`[gemini] ${res.status} を受信、1回だけリトライします: model=${geminiModel()}`)
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+    res = await request()
+  }
 
   if (!res.ok) {
     const detail = await res.text()

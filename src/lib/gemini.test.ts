@@ -225,9 +225,44 @@ describe("callGemini", () => {
   })
 
   it("APIがエラーステータスを返したらGeminiErrorを投げる", async () => {
-    stubFetch({ api: new Response("rate limited", { status: 429 }) })
+    stubFetch({ api: new Response("bad request", { status: 400 }) })
 
     await expect(callGemini({ prompt: "p" })).rejects.toThrow(GeminiError)
+  })
+
+  it("429/503は1回だけリトライし、成功したら結果を返す", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    let apiCalls = 0
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      apiCalls++
+      return apiCalls === 1
+        ? new Response("overloaded", { status: 503 })
+        : completionResponse("recovered")
+    })
+
+    const promise = callGemini({ prompt: "p" })
+    await vi.runAllTimersAsync()
+    await expect(promise).resolves.toBe("recovered")
+    expect(apiCalls).toBe(2)
+    vi.useRealTimers()
+  })
+
+  it("リトライも429/503ならGeminiErrorを投げる（fetchは2回まで）", async () => {
+    vi.useFakeTimers()
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    let apiCalls = 0
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      apiCalls++
+      return new Response("rate limited", { status: 429 })
+    })
+
+    const promise = callGemini({ prompt: "p" })
+    promise.catch(() => {}) // 未処理拒否の警告を避ける（検証は下のexpectで行う）
+    await vi.runAllTimersAsync()
+    await expect(promise).rejects.toThrow(GeminiError)
+    expect(apiCalls).toBe(2)
+    vi.useRealTimers()
   })
 
   it("choicesが空でも例外にせず空文字を返す", async () => {

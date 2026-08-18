@@ -181,7 +181,7 @@ describe("POST /api/ai/suggest-b", () => {
     expect(url).toBe(GEMINI_ENDPOINT)
     expect(init?.headers).toMatchObject({ Authorization: "Bearer test-gemini-key" })
     const body = requestBodyOf(fetchSpy)
-    expect(body.model).toBe("gemini-3.6-flash")
+    expect(body.model).toBe("gemini-3.5-flash")
     const content = body.messages[0].content
     expect(content[0].text).toContain("第1工具棚")
     // 画像URLではなくdata URIとして送る（Geminiは公開URLを取りに行かない）
@@ -192,12 +192,12 @@ describe("POST /api/ai/suggest-b", () => {
   })
 
   it("GEMINI_MODELが設定されていればそのモデルを使う", async () => {
-    vi.stubEnv("GEMINI_MODEL", "gemini-3.5-flash")
+    vi.stubEnv("GEMINI_MODEL", "gemini-3.6-flash")
     const fetchSpy = stubGeminiContent("[]")
 
     await suggestB(makeRequest({ image_url: "https://example.supabase.co/a.jpg" }))
 
-    expect(requestBodyOf(fetchSpy).model).toBe("gemini-3.5-flash")
+    expect(requestBodyOf(fetchSpy).model).toBe("gemini-3.6-flash")
   })
 
   it("画像の取得に失敗したら500を返しGemini APIは呼ばない", async () => {

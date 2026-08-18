@@ -20,8 +20,8 @@ Gemini（Google AI Studio）に一本化している。呼び出しは `src/lib/
 
 | 用途 | モデル |
 |---|---|
-| ToC 収納提案の解析（`/api/analyze`） | `gemini-3.6-flash` |
-| 管理画面のマーカー自動提案（`/api/ai/suggest-b`・`/api/ai/suggest-c`） | `gemini-3.6-flash` |
+| ToC 収納提案の解析（`/api/analyze`） | `gemini-3.5-flash` |
+| 管理画面のマーカー自動提案（`/api/ai/suggest-b`・`/api/ai/suggest-c`） | `gemini-3.5-flash` |
 
 必要な環境変数は `GEMINI_API_KEY` のみ（未設定でも WoZ＝管理者が手動でマーカーを打つ運用は成立する）。
 モデルは `GEMINI_MODEL` で差し替えられる。無料枠を使う前提で、**入力内容がGoogleの製品改善に

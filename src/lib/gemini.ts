@@ -11,7 +11,9 @@
 /** テストがURLで行き先を振り分けるため、文字列を二重管理しないようexportしている。 */
 export const GEMINI_ENDPOINT =
   "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-const DEFAULT_MODEL = "gemini-3.6-flash"
+// 3.6-flash は同じ画像2枚で約74秒かかり、本番で Google 側の "Deadline expired" (503) になった。
+// 3.5-flash は約8秒。速さが要件なので既定を 3.5 にする（GEMINI_MODEL で上書き可）。
+const DEFAULT_MODEL = "gemini-3.5-flash"
 
 /**
  * 画像1枚あたりの生バイト数の上限。

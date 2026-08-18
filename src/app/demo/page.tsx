@@ -141,8 +141,8 @@ export default function DemoPage() {
 
   if (step === "submitting") {
     return (
-      <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
-        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+      <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           写真を送信中
         </div>
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -160,8 +160,8 @@ export default function DemoPage() {
 
   if (step === "sent") {
     return (
-      <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
-        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+      <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           写真を送信しました
         </div>
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -175,13 +175,13 @@ export default function DemoPage() {
           <div className="w-full max-w-sm space-y-3">
             <button
               onClick={() => suggestionId && router.push(`/demo/waiting/${suggestionId}`)}
-              className="w-full rounded-lg bg-[#D96B2D] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20]"
+              className="w-full rounded-lg bg-[#B8501A] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#9E4414]"
             >
               提案を確認する
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-2 text-sm text-[#8B7360]"
+              className="w-full py-2 text-sm text-[#6E5A4B]"
             >
               トップに戻る
             </button>
@@ -192,8 +192,8 @@ export default function DemoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
-      <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+    <main aria-live="polite" className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+      <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
         写真で収納を整える
       </div>
 
@@ -234,6 +234,7 @@ export default function DemoPage() {
         </div>
 
         <input
+          aria-label="部屋全体の写真"
           ref={roomInputRef}
           type="file"
           accept="image/*"
@@ -241,6 +242,7 @@ export default function DemoPage() {
           onChange={(event) => handlePhotoChange(event, setRoomPhoto, setRoomFile)}
         />
         <input
+          aria-label="収納スペースの写真"
           ref={storageInputRef}
           type="file"
           accept="image/*"
@@ -252,31 +254,31 @@ export default function DemoPage() {
           {hasBothPhotos ? (
             <p className="font-semibold text-[#2D7C62]">2枚とも撮影できました</p>
           ) : hasAnyPhoto ? (
-            <p className="text-[#8B7360]">
+            <p className="text-[#6E5A4B]">
               {roomPhoto
                 ? "部屋全体の写真だけで提案します。収納スペースも撮ると精度が上がります"
                 : "収納スペースの写真だけで提案します。部屋全体も撮ると精度が上がります"}
             </p>
           ) : (
-            <p className="text-[#8B7360]">どちらか1枚を撮影すると提案に進めます</p>
+            <p className="text-[#6E5A4B]">どちらか1枚を撮影すると提案に進めます</p>
           )}
         </div>
 
         {errorMessage && (
-          <p className="text-sm text-red-600 text-center">{errorMessage}</p>
+          <p role="alert" className="text-sm text-red-700 text-center">{errorMessage}</p>
         )}
 
         <div className="space-y-3">
           <button
             onClick={handleAnalyze}
             disabled={!hasAnyPhoto}
-            className="w-full rounded-lg bg-[#D96B2D] py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20] disabled:bg-[#E1CDB9] disabled:text-[#9B806C]"
+            className="w-full rounded-lg bg-[#B8501A] py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#9E4414] disabled:bg-[#E1CDB9] disabled:text-[#6E5A4B]"
           >
             提案を見る
           </button>
           <button
             onClick={() => router.push("/")}
-            className="w-full py-2 text-sm text-[#8B7360]"
+            className="w-full py-2 text-sm text-[#6E5A4B]"
           >
             トップに戻る
           </button>
@@ -305,7 +307,7 @@ function PhotoCapture({
     <section className="space-y-3 rounded-lg border border-[#E8D8C7] bg-white/70 p-4 shadow-sm">
       <div>
         <h2 className="font-semibold text-[#2F2823]">{title}</h2>
-        <p className="mt-1 text-xs text-[#8B7360]">{description}</p>
+        <p className="mt-1 text-xs text-[#6E5A4B]">{description}</p>
       </div>
 
       {photo ? (
@@ -325,7 +327,7 @@ function PhotoCapture({
             </button>
             <button
               onClick={onClear}
-              className="rounded-lg py-2 text-sm font-medium text-[#9B806C] transition-colors hover:bg-[#FBF5EE]"
+              className="rounded-lg py-2 text-sm font-medium text-[#6E5A4B] transition-colors hover:bg-[#FBF5EE]"
             >
               削除
             </button>
@@ -334,7 +336,7 @@ function PhotoCapture({
       ) : (
         <button
           onClick={onCapture}
-          className="aspect-[4/3] w-full rounded-lg border-2 border-dashed border-[#E1CDB9] bg-[#FBF5EE] text-sm font-semibold text-[#8B7360] transition-colors hover:border-[#D96B2D] hover:bg-[#F9F3EC] hover:text-[#C85A20]"
+          className="aspect-[4/3] w-full rounded-lg border-2 border-dashed border-[#E1CDB9] bg-[#FBF5EE] text-sm font-semibold text-[#6E5A4B] transition-colors hover:border-[#D96B2D] hover:bg-[#F9F3EC] hover:text-[#C85A20]"
         >
           撮影する
         </button>

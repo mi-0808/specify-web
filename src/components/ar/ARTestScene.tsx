@@ -355,7 +355,7 @@ export default function ARTestScene() {
           className="absolute inset-0 flex items-center justify-center p-6"
           style={{ zIndex: 30 }}
         >
-          <div className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs">
+          <div role="alert" className="bg-black/80 text-white text-sm rounded-xl p-5 text-center max-w-xs">
             <p className="text-red-400 font-bold mb-2">エラー</p>
             <p>{error}</p>
           </div>

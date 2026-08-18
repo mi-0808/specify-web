@@ -50,7 +50,7 @@ export default function BReportPage() {
 
   if (pending) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
+      <main aria-live="polite" className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
         <div className="max-w-sm w-full space-y-4">
           <div className="text-4xl">⏳</div>
           <h1 className="text-xl font-bold text-slate-900">レポートを作成中です</h1>
@@ -65,18 +65,18 @@ export default function BReportPage() {
 
   if (!report) {
     return (
-      <main className="flex items-center justify-center min-h-[calc(100vh-49px)]">
-        <div className="text-sm text-slate-400">読み込み中...</div>
+      <main aria-live="polite" className="flex items-center justify-center min-h-[calc(100vh-49px)]">
+        <div className="text-sm text-slate-600">読み込み中...</div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-[calc(100vh-49px)] px-4 py-6">
+    <main aria-live="polite" className="min-h-[calc(100vh-49px)] px-4 py-6">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-slate-400">現場レポート</p>
+            <p className="text-xs text-slate-600">現場レポート</p>
             <h1 className="text-xl font-bold text-slate-900">{report.area_name}</h1>
           </div>
           <div className="flex gap-2 text-xs">
@@ -145,7 +145,7 @@ export default function BReportPage() {
             })}
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400">
+          <p className="rounded-xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-600">
             指摘事項はありませんでした
           </p>
         )}

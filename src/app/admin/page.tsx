@@ -25,7 +25,7 @@ export default async function AdminPage() {
       <header className="border-b border-[#E8D8C7] bg-[#FBF5EE]/95 px-4 py-4">
         <div className="mx-auto max-w-3xl">
           <h1 className="text-lg font-bold tracking-tight">管理画面</h1>
-          <p className="text-xs text-[#9B806C]">未対応の提案一覧</p>
+          <p className="text-xs text-[#6E5A4B]">未対応の提案一覧</p>
         </div>
       </header>
 

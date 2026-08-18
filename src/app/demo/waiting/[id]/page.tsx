@@ -55,8 +55,8 @@ export default function DemoWaitingPage() {
 
   if (suggestion?.status === "failed") {
     return (
-      <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
-        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+      <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           収納の改善案
         </div>
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -70,13 +70,13 @@ export default function DemoWaitingPage() {
           <div className="w-full max-w-sm space-y-3">
             <button
               onClick={() => router.push("/demo")}
-              className="w-full rounded-lg bg-[#D96B2D] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20]"
+              className="w-full rounded-lg bg-[#B8501A] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#9E4414]"
             >
               もう一度撮る
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-2 text-sm text-[#8B7360]"
+              className="w-full py-2 text-sm text-[#6E5A4B]"
             >
               トップに戻る
             </button>
@@ -92,8 +92,8 @@ export default function DemoWaitingPage() {
     const allMarkers = [...roomMarkers, ...storageMarkers].sort((a, b) => a.sort_order - b.sort_order)
 
     return (
-      <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
-        <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+      <main aria-live="polite" className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+        <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           収納の改善案が届きました
         </div>
         <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
@@ -113,14 +113,14 @@ export default function DemoWaitingPage() {
             if (!url) return null
             return (
               <div key={imageType}>
-                <p className="mb-1 text-xs font-semibold text-[#9B806C]">{label}</p>
+                <p className="mb-1 text-xs font-semibold text-[#6E5A4B]">{label}</p>
                 <div className="relative rounded-lg overflow-hidden border border-[#E8D8C7] bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt={label} className="w-full object-cover" />
                   {imgMarkers.map((m, i) => (
                     <div
                       key={m.id}
-                      className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#D96B2D] text-xs font-bold text-white shadow-lg ring-2 ring-white"
+                      className="absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#B8501A] text-xs font-bold text-white shadow-lg ring-2 ring-white"
                       style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%` }}
                     >
                       {offset + i + 1}
@@ -137,7 +137,7 @@ export default function DemoWaitingPage() {
               <p className="text-sm font-semibold text-[#2F2823]">指摘・改善提案</p>
               {allMarkers.map((m, i) => (
                 <div key={m.id} className="flex gap-3 rounded-lg border border-[#E8D8C7] bg-white/70 p-4">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D96B2D] text-xs font-bold text-white">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#B8501A] text-xs font-bold text-white">
                     {i + 1}
                   </span>
                   <p className="text-sm leading-6 text-[#2F2823]">{m.comment}</p>
@@ -161,7 +161,7 @@ export default function DemoWaitingPage() {
             </button>
             <button
               onClick={() => router.push("/dashboard")}
-              className="w-full rounded-lg bg-[#D96B2D] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20]"
+              className="w-full rounded-lg bg-[#B8501A] py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#9E4414]"
             >
               保存する
             </button>
@@ -172,8 +172,8 @@ export default function DemoWaitingPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
-      <div className="bg-[#D96B2D] py-1.5 text-center text-xs font-medium text-white">
+    <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+      <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
         収納の改善案を準備中
       </div>
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -184,7 +184,7 @@ export default function DemoWaitingPage() {
         </div>
         <h1 className="mb-2 text-2xl font-bold tracking-tight">収納の改善案を準備しています...</h1>
         <p className="text-sm text-[#6E5A4B]">届くまで少し時間がかかります。このまま待っていてください。</p>
-        {errorMessage && <p className="mt-4 text-sm text-red-600">{errorMessage}</p>}
+        {errorMessage && <p role="alert" className="mt-4 text-sm text-red-700">{errorMessage}</p>}
       </div>
     </main>
   )

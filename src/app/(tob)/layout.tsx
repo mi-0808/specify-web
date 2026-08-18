@@ -12,7 +12,7 @@ export default async function ToBLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white px-4 py-3 flex items-center justify-between">
         <a href="/b" className="text-sm font-bold tracking-tight text-slate-900">
-          Specify <span className="font-normal text-slate-400">for Business</span>
+          Specify <span className="font-normal text-slate-600">for Business</span>
         </a>
         <div className="flex items-center gap-3">
           {isAdmin && (

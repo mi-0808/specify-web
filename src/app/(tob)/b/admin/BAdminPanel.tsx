@@ -179,7 +179,7 @@ export default function BAdminPanel({
         <aside className="w-56 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
           {visiblePending.length > 0 && (
             <div className="p-3 space-y-1">
-              <p className="text-xs font-semibold text-slate-400 px-1">未対応</p>
+              <p className="text-xs font-semibold text-slate-600 px-1">未対応</p>
               {visiblePending.map((scan) => (
                 <button
                   key={scan.id}
@@ -191,7 +191,7 @@ export default function BAdminPanel({
                   }`}
                 >
                   <p className="text-sm font-medium text-slate-800 truncate">{scan.area_name}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600">
                     {new Date(scan.created_at).toLocaleString("ja-JP", {
                       month: "numeric",
                       day: "numeric",
@@ -206,14 +206,14 @@ export default function BAdminPanel({
 
           {doneScans.length > 0 && (
             <div className="p-3 space-y-1 border-t border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 px-1">対応済み</p>
+              <p className="text-xs font-semibold text-slate-600 px-1">対応済み</p>
               {doneScans.filter((s) => !sentIds.has(s.id)).map((scan) => (
                 <div
                   key={scan.id}
                   className="rounded-lg px-3 py-2.5 opacity-50"
                 >
                   <p className="text-sm font-medium text-slate-700 truncate">{scan.area_name}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600">
                     {new Date(scan.created_at).toLocaleString("ja-JP", {
                       month: "numeric",
                       day: "numeric",
@@ -227,7 +227,7 @@ export default function BAdminPanel({
           )}
 
           {visiblePending.length === 0 && doneScans.length === 0 && (
-            <div className="p-6 text-center text-xs text-slate-400">
+            <div className="p-6 text-center text-xs text-slate-600">
               スキャンはありません
             </div>
           )}
@@ -241,7 +241,7 @@ export default function BAdminPanel({
                 {/* スキャン情報 */}
                 <div>
                   <h2 className="text-base font-bold text-slate-900">{selectedScan.area_name}</h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600">
                     {new Date(selectedScan.created_at).toLocaleString("ja-JP")}
                   </p>
                 </div>
@@ -283,7 +283,7 @@ export default function BAdminPanel({
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-400">
+                  <div className="rounded-xl border border-dashed border-slate-200 py-12 text-center text-sm text-slate-600">
                     画像がありません
                   </div>
                 )}
@@ -305,7 +305,7 @@ export default function BAdminPanel({
                 )}
 
                 {markers.length === 0 && selectedScan.image_url && (
-                  <p className="text-center text-xs text-slate-400 py-4">
+                  <p className="text-center text-xs text-slate-600 py-4">
                     写真上をクリックしてマーカーを追加してください
                   </p>
                 )}
@@ -313,7 +313,7 @@ export default function BAdminPanel({
 
               {/* 固定フッター */}
               <div className="border-t border-slate-200 bg-white px-4 py-3 flex items-center gap-3">
-                {error && <p className="flex-1 text-xs text-red-500">{error}</p>}
+                {error && <p role="alert" className="flex-1 text-xs text-red-700">{error}</p>}
                 {!error && <div className="flex-1" />}
                 <button
                   onClick={() => { setSelectedScan(null); setMarkers([]) }}
@@ -331,7 +331,7 @@ export default function BAdminPanel({
               </div>
             </>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
+            <div className="flex flex-1 items-center justify-center text-sm text-slate-600">
               {visiblePending.length === 0 ? "未対応のスキャンはありません" : "左の一覧からスキャンを選択してください"}
             </div>
           )}
@@ -364,9 +364,10 @@ function MarkerInput({
             {index}
           </span>
           <select
+            aria-label={`指摘${index}のカテゴリ`}
             value={marker.category}
             onChange={(e) => onChange({ category: e.target.value as Category })}
-            className="rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none"
+            className="rounded border border-slate-200 px-2 py-1 text-xs font-medium text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             {(Object.entries(CATEGORY_CONFIG) as [Category, typeof CATEGORY_CONFIG[Category]][]).map(
               ([key, { label }]) => (
@@ -379,24 +380,25 @@ function MarkerInput({
         </div>
         <button
           onClick={onRemove}
-          className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+          className="text-xs text-slate-600 hover:text-red-700 transition-colors"
         >
           削除
         </button>
       </div>
 
       <textarea
+        aria-label={`指摘${index}のコメント`}
         value={marker.comment}
         onChange={(e) => onChange({ comment: e.target.value })}
         placeholder="コメントを入力..."
         rows={2}
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
       />
 
       <div>
         <button
           onClick={() => setShowTemplates(!showTemplates)}
-          className="text-xs text-blue-500 hover:underline"
+          className="text-xs text-blue-700 hover:underline"
         >
           {showTemplates ? "テンプレートを閉じる" : "テンプレートから選ぶ"}
         </button>

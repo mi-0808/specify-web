@@ -77,7 +77,7 @@ export default function BScanPage() {
     const failed = sendState === "error"
 
     return (
-      <main className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
+      <main aria-live="polite" className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
         <div className="max-w-sm w-full space-y-6">
           <div
             className={`flex h-16 w-16 mx-auto items-center justify-center rounded-full text-3xl ${
@@ -91,7 +91,7 @@ export default function BScanPage() {
               {failed ? "送信できませんでした" : "送信しました"}
             </h1>
             {failed ? (
-              <p className="text-sm text-red-500 leading-6">{error}</p>
+              <p role="alert" className="text-sm text-red-700 leading-6">{error}</p>
             ) : (
               <p className="text-sm text-slate-500 leading-6">
                 レポートが完成次第、登録メールアドレスにお知らせします。
@@ -99,7 +99,7 @@ export default function BScanPage() {
               </p>
             )}
             {sendState === "sending" && (
-              <p className="text-xs text-slate-400">写真をアップロード中...</p>
+              <p className="text-xs text-slate-600">写真をアップロード中...</p>
             )}
           </div>
           <div className="space-y-3">
@@ -113,7 +113,7 @@ export default function BScanPage() {
                 </button>
                 <button
                   onClick={() => setStep("capture")}
-                  className="w-full py-2 text-sm text-slate-400"
+                  className="w-full py-2 text-sm text-slate-600"
                 >
                   撮影画面に戻る
                 </button>
@@ -128,7 +128,7 @@ export default function BScanPage() {
                 </button>
                 <button
                   onClick={() => { setStep("input"); setAreaName(""); setPhoto(null); setFile(null) }}
-                  className="w-full py-2 text-sm text-slate-400"
+                  className="w-full py-2 text-sm text-slate-600"
                 >
                   続けて撮影する
                 </button>
@@ -142,11 +142,11 @@ export default function BScanPage() {
 
   if (step === "capture") {
     return (
-      <main className="min-h-[calc(100vh-49px)] px-4 py-6">
+      <main aria-live="polite" className="min-h-[calc(100vh-49px)] px-4 py-6">
         <div className="mx-auto max-w-lg space-y-5">
           <button
             onClick={() => setStep("input")}
-            className="text-sm text-slate-400 hover:text-slate-600"
+            className="text-sm text-slate-600 hover:text-slate-600"
           >
             ← 戻る
           </button>
@@ -158,9 +158,12 @@ export default function BScanPage() {
             <p className="text-sm text-slate-500">明るい場所で撮影すると分析精度が上がります。</p>
           </div>
 
-          <div
-            onClick={() => !photo && fileInputRef.current?.click()}
-            className={`relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 transition-colors ${
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!!photo}
+            aria-label={photo ? undefined : "写真を撮影または選択"}
+            className={`relative block aspect-[4/3] w-full rounded-xl overflow-hidden border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
               photo
                 ? "border-slate-200"
                 : "border-dashed border-slate-300 bg-slate-100 cursor-pointer hover:border-blue-400 hover:bg-blue-50"
@@ -170,14 +173,15 @@ export default function BScanPage() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={photo} alt="撮影した写真" className="w-full h-full object-cover" />
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
+              <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-600">
                 <span className="text-4xl">📷</span>
                 <span className="text-sm font-medium">タップして撮影 / 選択</span>
               </div>
             )}
-          </div>
+          </button>
 
           <input
+            aria-label="エリアの写真"
             ref={fileInputRef}
             type="file"
             accept="image/*"
@@ -189,18 +193,18 @@ export default function BScanPage() {
           {photo && (
             <button
               onClick={() => { setPhoto(null); setFile(null) }}
-              className="text-sm text-slate-400 underline"
+              className="text-sm text-slate-600 underline"
             >
               撮り直す
             </button>
           )}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
           <button
             onClick={handleSubmit}
             disabled={!photo}
-            className="w-full rounded-xl bg-blue-600 py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400"
+            className="w-full rounded-xl bg-blue-600 py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-600"
           >
             この写真で送信する
           </button>
@@ -210,7 +214,7 @@ export default function BScanPage() {
   }
 
   return (
-    <main className="min-h-[calc(100vh-49px)] px-4 py-6">
+    <main aria-live="polite" className="min-h-[calc(100vh-49px)] px-4 py-6">
       <div className="mx-auto max-w-lg space-y-5">
         <div className="space-y-1">
           <p className="text-xs font-semibold text-blue-600">Step 1 / 2</p>
@@ -221,18 +225,19 @@ export default function BScanPage() {
         </div>
 
         <input
+          aria-label="エリア名"
           type="text"
           value={areaName}
           onChange={(e) => setAreaName(e.target.value)}
           placeholder="例：第1工具棚"
-          className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-lg border border-slate-300 px-4 py-3 text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           onKeyDown={(e) => e.key === "Enter" && areaName.trim() && setStep("capture")}
         />
 
         <button
           onClick={() => setStep("capture")}
           disabled={!areaName.trim()}
-          className="w-full rounded-xl bg-blue-600 py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400"
+          className="w-full rounded-xl bg-blue-600 py-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-600"
         >
           次へ：写真を撮る
         </button>

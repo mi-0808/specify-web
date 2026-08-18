@@ -91,7 +91,7 @@ const [storagePhoto, setStoragePhoto] = useState<string | null>(null) // 収納�
 
 ### `POST /api/analyze`
 
-写真をAI（Gemini `gemini-3.6-flash`）に渡し、改善方針と提案リストを生成して `suggestions` 行を更新する。
+写真をAI（Gemini `gemini-3.5-flash`）に渡し、改善方針と提案リストを生成して `suggestions` 行を更新する。
 呼び出しは `src/lib/gemini.ts` 経由（[docs/ai-gemini-plan.md](ai-gemini-plan.md)）。
 `/demo` からはレスポンスを待たずに非同期でキックされ、担当者は `/demo/waiting/[id]` で結果を待つ。
 
@@ -183,7 +183,7 @@ RLSは `20260616025745_enable_rls_policies.sql`（ToC）と `20260708155650_crea
 
 | # | 内容 | 状態 |
 |---|---|---|
-| ① | `POST /api/analyze`（当初はWoZの固定文、現在は `gemini-3.6-flash` による解析） | 実装済み・実APIでの疎通確認済み |
+| ① | `POST /api/analyze`（当初はWoZの固定文、現在は `gemini-3.5-flash` による解析） | 実装済み・実APIでの疎通確認済み |
 | ② | `suggestions` のカラム追加と `src/types/database.ts` の型更新 | 実装済み |
 | ③ | `/demo` を撮影フローに置き換え（AR計測コードは参照しない） | 実装済み（`shoot` → `submitting` → `sent` の3ステップ） |
 | ④ | 撮影画像を `/api/analyze` に送信し結果を表示 | 実装済み（結果は `/demo/waiting/[id]` で表示） |

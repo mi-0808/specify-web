@@ -45,14 +45,14 @@ beforeEach(() => {
 })
 
 describe("geminiModel", () => {
-  it("GEMINI_MODELが未設定なら gemini-3.6-flash を使う", () => {
+  it("GEMINI_MODELが未設定なら gemini-3.5-flash を使う", () => {
     vi.stubEnv("GEMINI_MODEL", "")
-    expect(geminiModel()).toBe("gemini-3.6-flash")
+    expect(geminiModel()).toBe("gemini-3.5-flash")
   })
 
   it("GEMINI_MODELが設定されていればそれを使う", () => {
-    vi.stubEnv("GEMINI_MODEL", "gemini-3.5-flash")
-    expect(geminiModel()).toBe("gemini-3.5-flash")
+    vi.stubEnv("GEMINI_MODEL", "gemini-3.6-flash")
+    expect(geminiModel()).toBe("gemini-3.6-flash")
   })
 })
 

@@ -75,15 +75,16 @@ export default function NewSpacePage() {
 
         <div className="flex-1 flex flex-col justify-center px-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="spaceName" className="block text-sm font-medium text-gray-700 mb-1">
               スペース名
             </label>
             <input
+              id="spaceName"
               type="text"
               value={spaceName}
               onChange={(e) => setSpaceName(e.target.value)}
               placeholder="例: リビングの押入れ"
-              className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+              className="w-full px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-base"
             />
           </div>
 
@@ -95,7 +96,7 @@ export default function NewSpacePage() {
             ARで計測する
           </button>
 
-          <p className="text-xs text-center text-gray-400">
+          <p className="text-xs text-center text-gray-600">
             スマートフォンのカメラを使い、棚の4隅をタップして寸法を計測します
           </p>
         </div>
@@ -143,18 +144,19 @@ export default function NewSpacePage() {
               </div>
             ))}
             <div className="bg-blue-50 rounded-xl p-3 text-center col-span-1">
-              <p className="text-xs text-gray-500">高さ</p>
+              <label htmlFor="height" className="block text-xs text-gray-500">高さ</label>
               <input
+                id="height"
                 type="number"
                 value={heightInput}
                 onChange={(e) => setHeightInput(e.target.value)}
                 placeholder="0"
-                className="w-full text-2xl font-bold text-blue-600 bg-transparent text-center focus:outline-none"
+                className="w-full text-2xl font-bold text-blue-600 bg-transparent text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               />
               <p className="text-xs text-gray-500">cm</p>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3 text-center">
+          <p className="text-xs text-gray-600 mt-3 text-center">
             ※ 高さは手動で入力してください
           </p>
         </div>

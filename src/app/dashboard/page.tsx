@@ -31,11 +31,11 @@ export default async function DashboardPage() {
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div>
             <h1 className="text-lg font-bold tracking-tight">Specify</h1>
-            <p className="text-xs text-[#9B806C]">{user.email}</p>
+            <p className="text-xs text-[#6E5A4B]">{user.email}</p>
           </div>
           <Link
             href="/demo"
-            className="rounded-lg bg-[#D96B2D] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#C85A20]"
+            className="rounded-lg bg-[#B8501A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#9E4414]"
           >
             新しく撮影する
           </Link>
@@ -56,10 +56,10 @@ export default async function DashboardPage() {
         {!suggestions || suggestions.length === 0 ? (
           <div className="rounded-lg border border-dashed border-[#E1CDB9] bg-white/55 px-5 py-14 text-center">
             <p className="font-semibold text-[#2F2823]">まだ提案履歴がありません</p>
-            <p className="mt-2 text-sm text-[#8B7360]">最初の写真から、収納の余白を探しましょう。</p>
+            <p className="mt-2 text-sm text-[#6E5A4B]">最初の写真から、収納の余白を探しましょう。</p>
             <Link
               href="/demo"
-              className="mt-5 inline-flex rounded-lg bg-[#D96B2D] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#C85A20]"
+              className="mt-5 inline-flex rounded-lg bg-[#B8501A] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#9E4414]"
             >
               写真を撮る
             </Link>
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
                     <p className="rounded-full bg-[#F5C842]/25 px-3 py-1 text-xs font-semibold text-[#8A5A10]">
                       しまい先候補
                     </p>
-                    <p className="text-xs text-[#9B806C]">
+                    <p className="text-xs text-[#6E5A4B]">
                       {new Date(suggestion.created_at).toLocaleString("ja-JP")}
                     </p>
                   </div>

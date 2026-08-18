@@ -41,17 +41,17 @@ export default function HomePage() {
           <div className="space-y-3">
             <Link
               href="/demo"
-              className="block w-full rounded-lg bg-[#D96B2D] px-4 py-4 text-center text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#C85A20]"
+              className="block w-full rounded-lg bg-[#B8501A] px-4 py-4 text-center text-base font-semibold text-white shadow-sm transition-colors hover:bg-[#9E4414]"
             >
               写真を撮って試してみる（登録不要）
             </Link>
-            <p className="text-center text-xs leading-5 text-[#9B806C]">
+            <p className="text-center text-xs leading-5 text-[#6E5A4B]">
               両方の写真があると、提案の精度が上がります。
             </p>
           </div>
         </section>
 
-        <footer className="grid grid-cols-3 gap-2 text-center text-xs text-[#8B7360]">
+        <footer className="grid grid-cols-3 gap-2 text-center text-xs text-[#6E5A4B]">
           <div className="rounded-lg border border-[#E8D8C7] bg-white/45 px-2 py-3">
             撮る
           </div>

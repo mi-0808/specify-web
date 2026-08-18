@@ -53,34 +53,36 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             メールアドレス
           </label>
           <input
+            id="email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             placeholder="you@example.com"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
             パスワード
           </label>
           <input
+            id="password"
             type="password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             placeholder="••••••••"
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {message && <p className="text-sm text-green-600">{message}</p>}
+        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {message && <p role="status" className="text-sm text-green-700">{message}</p>}
 
         <button
           type="submit"
@@ -108,7 +110,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <Suspense fallback={<div className="text-sm text-gray-400">読み込み中...</div>}>
+      <Suspense fallback={<div className="text-sm text-gray-600">読み込み中...</div>}>
         <LoginForm />
       </Suspense>
     </main>

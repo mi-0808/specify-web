@@ -27,11 +27,12 @@ export default function AdminPanel({
   function handleImageClick(
     suggestionId: string,
     imageType: "room" | "storage",
-    e: React.MouseEvent<HTMLDivElement>
+    e: React.MouseEvent<HTMLButtonElement>
   ) {
     const rect = e.currentTarget.getBoundingClientRect()
-    const x = (e.clientX - rect.left) / rect.width
-    const y = (e.clientY - rect.top) / rect.height
+    // キーボード操作（detail === 0）は中央に配置
+    const x = e.detail === 0 ? 0.5 : (e.clientX - rect.left) / rect.width
+    const y = e.detail === 0 ? 0.5 : (e.clientY - rect.top) / rect.height
     const id = crypto.randomUUID()
     setMarkers((prev) => ({
       ...prev,
@@ -117,7 +118,7 @@ export default function AdminPanel({
 
   if (suggestions.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-[#E1CDB9] bg-white/55 px-5 py-14 text-center text-sm text-[#8B7360]">
+      <p className="rounded-lg border border-dashed border-[#E1CDB9] bg-white/55 px-5 py-14 text-center text-sm text-[#6E5A4B]">
         未対応の提案はありません
       </p>
     )
@@ -125,7 +126,7 @@ export default function AdminPanel({
 
   return (
     <div className="space-y-6">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       {suggestions.map((suggestion) => {
         const ms = markers[suggestion.id] ?? []
         const roomMarkers = ms.filter((m) => m.image_type === "room")
@@ -133,7 +134,7 @@ export default function AdminPanel({
 
         return (
           <div key={suggestion.id} className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 shadow-sm space-y-4">
-            <p className="text-xs text-[#9B806C]">
+            <p className="text-xs text-[#6E5A4B]">
               {new Date(suggestion.created_at).toLocaleString("ja-JP")}
             </p>
 
@@ -148,9 +149,11 @@ export default function AdminPanel({
 
                 return (
                   <div key={imageType}>
-                    <p className="mb-1 text-xs font-semibold text-[#9B806C]">{label}</p>
-                    <div
-                      className="relative cursor-crosshair rounded-lg overflow-hidden border border-[#E8D8C7] select-none"
+                    <p className="mb-1 text-xs font-semibold text-[#6E5A4B]">{label}</p>
+                    <button
+                      type="button"
+                      aria-label={`${label}の写真にマーカーを追加`}
+                      className="relative block w-full cursor-crosshair rounded-lg overflow-hidden border border-[#E8D8C7] select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#B8501A]"
                       onClick={(e) => handleImageClick(suggestion.id, imageType, e)}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -158,14 +161,14 @@ export default function AdminPanel({
                       {imgMarkers.map((m, i) => (
                         <div
                           key={m.id}
-                          className="pointer-events-none absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#D96B2D] text-xs font-bold text-white shadow ring-2 ring-white"
+                          className="pointer-events-none absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#B8501A] text-xs font-bold text-white shadow ring-2 ring-white"
                           style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%` }}
                         >
                           {offset + i + 1}
                         </div>
                       ))}
-                    </div>
-                    <p className="mt-1 text-xs text-[#9B806C]">写真をクリックしてマーカーを追加</p>
+                    </button>
+                    <p className="mt-1 text-xs text-[#6E5A4B]">写真をクリックしてマーカーを追加</p>
                   </div>
                 )
               })}
@@ -174,25 +177,26 @@ export default function AdminPanel({
             {/* マーカーコメント入力 */}
             {ms.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-[#9B806C]">マーカー一覧</p>
+                <p className="text-xs font-semibold text-[#6E5A4B]">マーカー一覧</p>
                 {ms.map((m, i) => (
                   <div key={m.id} className="flex items-start gap-2 rounded-lg border border-[#E8D8C7] bg-white p-3">
-                    <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#D96B2D] text-xs font-bold text-white">
+                    <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#B8501A] text-xs font-bold text-white">
                       {i + 1}
                     </span>
-                    <span className="mt-1 text-xs text-[#9B806C] shrink-0">
+                    <span className="mt-1 text-xs text-[#6E5A4B] shrink-0">
                       {m.image_type === "room" ? "部屋" : "収納"}
                     </span>
                     <textarea
+                      aria-label={`マーカー${i + 1}のコメント`}
                       value={m.comment}
                       onChange={(e) => updateMarker(suggestion.id, m.id, e.target.value)}
                       placeholder="コメントを入力..."
                       rows={2}
-                      className="flex-1 rounded border border-[#E8D8C7] px-2 py-1 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#D96B2D]"
+                      className="flex-1 rounded border border-[#E8D8C7] px-2 py-1 text-sm resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D96B2D]"
                     />
                     <button
                       onClick={() => removeMarker(suggestion.id, m.id)}
-                      className="mt-1 text-xs text-[#9B806C] hover:text-red-500"
+                      className="mt-1 text-xs text-[#6E5A4B] hover:text-red-700"
                     >
                       削除
                     </button>
@@ -212,7 +216,7 @@ export default function AdminPanel({
               <button
                 onClick={() => handleSend(suggestion.id)}
                 disabled={sending === suggestion.id}
-                className="rounded-lg bg-[#D96B2D] px-5 py-2 text-sm font-semibold text-white hover:bg-[#C85A20] disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-[#B8501A] px-5 py-2 text-sm font-semibold text-white hover:bg-[#9E4414] disabled:opacity-50 transition-colors"
               >
                 {sending === suggestion.id ? "送信中..." : "レポートを送信 ✓"}
               </button>

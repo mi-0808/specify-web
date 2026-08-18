@@ -43,7 +43,7 @@ export default function ToBLanding() {
           無料で試してみる
         </Link>
 
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-600">
           クレジットカード不要・登録から即利用可能
         </p>
       </div>

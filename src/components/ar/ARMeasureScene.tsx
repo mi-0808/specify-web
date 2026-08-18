@@ -209,7 +209,7 @@ export default function ARMeasureScene({ onMeasured }: ARMeasureSceneProps) {
         )}
 
         {phase === "error" && (
-          <div className="mt-8 mx-4 px-4 py-3 bg-red-600/90 rounded-2xl text-white text-center">
+          <div role="alert" className="mt-8 mx-4 px-4 py-3 bg-red-600/90 rounded-2xl text-white text-center">
             <p className="font-semibold">エラー</p>
             <p className="text-sm mt-1">{error}</p>
           </div>

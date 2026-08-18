@@ -38,7 +38,7 @@ export default async function BWorkspacePage() {
             <div className="text-4xl">📷</div>
             <div>
               <p className="font-semibold text-slate-700">まず現場のエリアを撮影してみましょう</p>
-              <p className="mt-1 text-sm text-slate-400">工具棚・作業台などのエリアを撮影して送信するだけです</p>
+              <p className="mt-1 text-sm text-slate-600">工具棚・作業台などのエリアを撮影して送信するだけです</p>
             </div>
             <Link
               href="/b/scan"
@@ -57,7 +57,7 @@ export default async function BWorkspacePage() {
                 >
                   <div className="space-y-0.5">
                     <p className="font-semibold text-slate-900">{scan.area_name}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-600">
                       {new Date(scan.created_at).toLocaleString("ja-JP", {
                         month: "numeric",
                         day: "numeric",

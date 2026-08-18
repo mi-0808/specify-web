@@ -2,18 +2,18 @@ import Link from "next/link"
 
 export default function ToBLanding() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 py-16 text-center">
+    <main className="flex flex-col items-center justify-center min-h-[calc(100dvh-49px)] px-4 py-10 text-center">
       <div className="max-w-xl w-full space-y-8">
         <div className="space-y-4">
           <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
             製造業・工場向け
           </span>
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 leading-tight">
+          <h1 className="text-balance text-[26px] font-bold tracking-tight text-slate-900 leading-tight sm:text-4xl">
             現場の写真を撮るだけで<br />
             <span className="text-blue-600">動線と安全の問題</span>が見える
           </h1>
-          <p className="text-base text-slate-500 leading-7">
-            工具棚・作業台・フロアを撮影して送信するだけ。<br />
+          <p className="text-balance text-sm text-slate-500 leading-6 sm:text-base sm:leading-7">
+            工具棚・作業台・フロアを撮影して送信するだけ。
             動線改善・安全確認・新人研修・設備変更前後の確認に。
           </p>
         </div>

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 const ARTestScene = dynamic(() => import("@/components/ar/ARTestScene"), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center w-screen h-screen bg-black text-white text-sm">
+    <div className="flex items-center justify-center w-screen h-dvh bg-black text-white text-sm">
       読み込み中...
     </div>
   ),
@@ -13,7 +13,7 @@ const ARTestScene = dynamic(() => import("@/components/ar/ARTestScene"), {
 
 export default function ARTestPage() {
   return (
-    <main className="w-screen h-screen overflow-hidden">
+    <main className="w-screen h-dvh overflow-hidden">
       <ARTestScene />
     </main>
   )

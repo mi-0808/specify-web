@@ -14,6 +14,11 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
+  // ToB（/b/…）から来たときは for Business の青、それ以外は ToC のクリーム/オレンジに合わせる
+  const forB = next.startsWith("/b");
+  const t = forB
+    ? { muted: "text-slate-500", border: "border-slate-200", ring: "focus-visible:ring-blue-500", btn: "bg-blue-600 hover:bg-blue-700", link: "text-blue-600" }
+    : { muted: "text-[#6E5A4B]", border: "border-[#E8D8C7]", ring: "focus-visible:ring-[#B8501A]", btn: "bg-[#B8501A] hover:bg-[#9E4414]", link: "text-[#B8501A]" };
   const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -43,40 +48,44 @@ function LoginForm() {
   }
 
   return (
+    <main className={`flex items-center justify-center min-h-dvh px-4 ${forB ? "bg-slate-50 text-slate-900" : "bg-[#FBF5EE] text-[#2F2823]"}`}>
     <div className="max-w-sm w-full space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Specify</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <h1 className="text-2xl font-bold">Specify{forB && <span className="font-normal text-slate-400"> for Business</span>}</h1>
+        <p className={`mt-1 text-sm ${t.muted}`}>
           {isSignUp ? "アカウントを作成" : "ログイン"}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="email" className={`block text-sm font-medium ${t.muted} mb-1`}>
             メールアドレス
           </label>
           <input
             id="email"
             type="email"
+            autoComplete="email"
+            inputMode="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className={`w-full rounded-lg border ${t.border} bg-white px-3 py-3 focus:outline-none focus-visible:ring-2 ${t.ring}`}
             placeholder="you@example.com"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="password" className={`block text-sm font-medium ${t.muted} mb-1`}>
             パスワード
           </label>
           <input
             id="password"
             type="password"
+            autoComplete={isSignUp ? "new-password" : "current-password"}
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className={`w-full rounded-lg border ${t.border} bg-white px-3 py-3 focus:outline-none focus-visible:ring-2 ${t.ring}`}
             placeholder="••••••••"
           />
         </div>
@@ -87,32 +96,31 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          className={`w-full rounded-lg ${t.btn} py-3 font-semibold text-white shadow-sm transition-colors disabled:opacity-50`}
         >
           {loading ? "処理中..." : isSignUp ? "アカウント作成" : "ログイン"}
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className={`text-center text-sm ${t.muted}`}>
         {isSignUp ? "すでにアカウントをお持ちの方は" : "アカウントをお持ちでない方は"}
         <button
           type="button"
           onClick={() => setIsSignUp(!isSignUp)}
-          className="ml-1 text-blue-600 hover:underline"
+          className={`ml-1 inline-block px-2 py-3 font-medium ${t.link} hover:underline`}
         >
           {isSignUp ? "ログイン" : "新規登録"}
         </button>
       </p>
     </div>
+    </main>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex items-center justify-center min-h-screen bg-gray-50 px-4">
-      <Suspense fallback={<div className="text-sm text-gray-600">読み込み中...</div>}>
-        <LoginForm />
-      </Suspense>
-    </main>
+    <Suspense fallback={<main className="flex min-h-dvh items-center justify-center bg-[#FBF5EE] px-4 text-sm text-[#6E5A4B]">読み込み中...</main>}>
+      <LoginForm />
+    </Suspense>
   );
 }

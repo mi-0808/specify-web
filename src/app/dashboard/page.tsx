@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false }) as { data: SuggestionRow[] | null };
 
   return (
-    <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+    <main className="min-h-dvh bg-[#FBF5EE] text-[#2F2823]">
       <header className="border-b border-[#E8D8C7] bg-[#FBF5EE]/95 px-4 py-4">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div>
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/demo"
-            className="rounded-lg bg-[#B8501A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#9E4414]"
+            className="rounded-lg bg-[#B8501A] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#9E4414]"
           >
             新しく撮影する
           </Link>
@@ -70,24 +70,31 @@ export default async function DashboardPage() {
               const firstSuggestion = getFirstSuggestion(suggestion.storage_options);
 
               return (
-                <li
-                  key={suggestion.id}
-                  className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 shadow-sm"
-                >
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="rounded-full bg-[#F5C842]/25 px-3 py-1 text-xs font-semibold text-[#8A5A10]">
-                      しまい先候補
+                <li key={suggestion.id}>
+                  {/* 過去の結果を開き直せるようにする（/demo/waiting/[id] は done でも表示できる） */}
+                  <Link
+                    href={`/demo/waiting/${suggestion.id}`}
+                    className="block rounded-lg border border-[#E8D8C7] bg-white/70 p-4 shadow-sm transition-colors hover:border-[#B8501A]"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="rounded-full bg-[#F5C842]/25 px-3 py-1 text-xs font-semibold text-[#8A5A10]">
+                        {suggestion.status === "done"
+                          ? "しまい先候補"
+                          : suggestion.status === "failed"
+                            ? "作成に失敗"
+                            : "作成中"}
+                      </p>
+                      <p className="text-xs text-[#6E5A4B]">
+                        {new Date(suggestion.created_at).toLocaleString("ja-JP")}
+                      </p>
+                    </div>
+                    <p className="text-lg font-bold text-[#2F2823]">
+                      {firstSuggestion.target ?? "提案内容なし"}
                     </p>
-                    <p className="text-xs text-[#6E5A4B]">
-                      {new Date(suggestion.created_at).toLocaleString("ja-JP")}
+                    <p className="mt-1 text-sm text-[#6E5A4B]">
+                      {firstSuggestion.location ?? "収納先を確認しましょう"}
                     </p>
-                  </div>
-                  <p className="text-lg font-bold text-[#2F2823]">
-                    {firstSuggestion.target ?? "提案内容なし"}
-                  </p>
-                  <p className="mt-1 text-sm text-[#6E5A4B]">
-                    {firstSuggestion.location ?? "収納先を確認しましょう"}
-                  </p>
+                  </Link>
                 </li>
               );
             })}

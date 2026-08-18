@@ -9,6 +9,15 @@ type SuggestionRow = Database["public"]["Tables"]["suggestions"]["Row"]
 
 type SuggestionMarker = Database["public"]["Tables"]["suggestion_markers"]["Row"]
 
+/** `/api/analyze` が storage_options に保存する形（対象物・移動先・理由）。 */
+type StorageOption = { target?: string; location?: string; reason?: string }
+
+function toStorageOptions(value: unknown): StorageOption[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is StorageOption => typeof v === "object" && v !== null)
+    : []
+}
+
 export default function DemoWaitingPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
@@ -55,7 +64,7 @@ export default function DemoWaitingPage() {
 
   if (suggestion?.status === "failed") {
     return (
-      <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+      <main aria-live="polite" className="flex min-h-dvh flex-col bg-[#FBF5EE] text-[#2F2823]">
         <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           収納の改善案
         </div>
@@ -76,7 +85,7 @@ export default function DemoWaitingPage() {
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-2 text-sm text-[#6E5A4B]"
+              className="w-full py-3 text-sm text-[#6E5A4B]"
             >
               トップに戻る
             </button>
@@ -90,9 +99,10 @@ export default function DemoWaitingPage() {
     const roomMarkers = markers.filter((m) => m.image_type === "room")
     const storageMarkers = markers.filter((m) => m.image_type === "storage")
     const allMarkers = [...roomMarkers, ...storageMarkers].sort((a, b) => a.sort_order - b.sort_order)
+    const options = toStorageOptions(suggestion.storage_options)
 
     return (
-      <main aria-live="polite" className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+      <main aria-live="polite" className="min-h-dvh bg-[#FBF5EE] text-[#2F2823]">
         <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           収納の改善案が届きました
         </div>
@@ -104,7 +114,8 @@ export default function DemoWaitingPage() {
             <h1 className="text-3xl font-bold tracking-tight">こちらが提案です</h1>
           </div>
 
-          {/* 写真 + マーカー */}
+          {/* 写真 + マーカー。マーカーが無ければ読む対象ではないので2列サムネにして本文を上げる */}
+          <div className={allMarkers.length === 0 ? "grid grid-cols-2 gap-3" : "space-y-5"}>
           {(["room", "storage"] as const).map((imageType) => {
             const url = imageType === "room" ? suggestion.room_image_url : suggestion.storage_image_url
             const imgMarkers = imageType === "room" ? roomMarkers : storageMarkers
@@ -116,7 +127,7 @@ export default function DemoWaitingPage() {
                 <p className="mb-1 text-xs font-semibold text-[#6E5A4B]">{label}</p>
                 <div className="relative rounded-lg overflow-hidden border border-[#E8D8C7] bg-white">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt={label} className="w-full object-cover" />
+                  <img src={url} alt={label} className={allMarkers.length === 0 ? "aspect-square w-full object-cover" : "aspect-[4/3] w-full object-cover"} />
                   {imgMarkers.map((m, i) => (
                     <div
                       key={m.id}
@@ -130,6 +141,7 @@ export default function DemoWaitingPage() {
               </div>
             )
           })}
+          </div>
 
           {/* マーカーコメント一覧 */}
           {allMarkers.length > 0 && (
@@ -147,8 +159,35 @@ export default function DemoWaitingPage() {
           )}
 
           {suggestion.reasoning && (
-            <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 text-sm leading-6 text-[#2F2823]">
-              {suggestion.reasoning}
+            <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4">
+              <p className="mb-1 text-xs font-semibold text-[#6E5A4B]">全体の方針</p>
+              <p className="text-sm leading-6 text-[#2F2823]">{suggestion.reasoning}</p>
+            </div>
+          )}
+
+          {/* AIのしまい先提案（対象物 → 移動先）。以前は reasoning しか出しておらず、一番具体的な情報が見えなかった */}
+          {options.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-[#2F2823]">しまい先の提案</p>
+              <ol className="space-y-3">
+                {options.map((o, i) => (
+                  <li key={i} className="flex gap-3 rounded-lg border border-[#E8D8C7] bg-white/70 p-4">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#B8501A] text-xs font-bold text-white">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[#2F2823]">{o.target}</p>
+                      <p className="mt-1 flex items-start gap-1.5 text-sm">
+                        <span aria-hidden="true" className="text-[#B8501A]">→</span>
+                        <span className="rounded-full bg-[#3DAF85]/15 px-2.5 py-0.5 text-xs font-semibold leading-5 text-[#2D7C62]">
+                          {o.location}
+                        </span>
+                      </p>
+                      {o.reason && <p className="mt-2 text-sm leading-6 text-[#6E5A4B]">{o.reason}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
           )}
 
@@ -172,7 +211,7 @@ export default function DemoWaitingPage() {
   }
 
   return (
-    <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+    <main aria-live="polite" className="flex min-h-dvh flex-col bg-[#FBF5EE] text-[#2F2823]">
       <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
         収納の改善案を準備中
       </div>
@@ -182,9 +221,12 @@ export default function DemoWaitingPage() {
           <div className="h-20 animate-pulse bg-[#F5C842] [animation-delay:200ms]" />
           <div className="h-20 animate-pulse bg-[#3DAF85] [animation-delay:400ms]" />
         </div>
-        <h1 className="mb-2 text-2xl font-bold tracking-tight">収納の改善案を準備しています...</h1>
+        <h1 className="mb-2 text-2xl font-bold tracking-tight">収納の改善案を<br className="sm:hidden" />準備しています...</h1>
         <p className="text-sm text-[#6E5A4B]">届くまで少し時間がかかります。このまま待っていてください。</p>
         {errorMessage && <p role="alert" className="mt-4 text-sm text-red-700">{errorMessage}</p>}
+        <button onClick={() => router.push("/")} className="mt-8 py-3 text-sm text-[#6E5A4B]">
+          トップに戻る
+        </button>
       </div>
     </main>
   )

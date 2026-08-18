@@ -18,19 +18,22 @@ export default async function BWorkspacePage() {
   }>
 
   return (
-    <main className="min-h-[calc(100vh-49px)] px-4 py-6">
+    <main className="min-h-[calc(100dvh-49px)] px-4 py-6">
       <div className="mx-auto max-w-2xl space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-900">エリア一覧</h1>
             <p className="text-sm text-slate-500">撮影・送信したエリアとレポートを確認できます</p>
           </div>
-          <Link
-            href="/b/scan"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-          >
-            + 新しいエリアを追加
-          </Link>
+          {/* 0件のときは空状態のCTAと重複するので出さない */}
+          {rows.length > 0 && (
+            <Link
+              href="/b/scan"
+              className="rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700 transition-colors sm:py-2"
+            >
+              + 新しいエリアを追加
+            </Link>
+          )}
         </div>
 
         {rows.length === 0 ? (

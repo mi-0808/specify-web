@@ -2,13 +2,13 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-between px-5 py-8">
+    <main className="min-h-dvh bg-[#FBF5EE] text-[#2F2823]">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-between px-5 py-8">
         <header className="flex items-center justify-between">
           <p className="text-lg font-bold tracking-tight">Specify</p>
           <Link
             href="/login"
-            className="rounded-full border border-[#E8D8C7] px-3 py-1.5 text-sm font-medium text-[#6E5A4B] transition-colors hover:bg-white"
+            className="rounded-full border border-[#E8D8C7] px-4 py-2.5 text-sm font-medium text-[#6E5A4B] transition-colors hover:bg-white"
           >
             ログイン
           </Link>

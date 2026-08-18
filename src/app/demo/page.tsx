@@ -141,7 +141,7 @@ export default function DemoPage() {
 
   if (step === "submitting") {
     return (
-      <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+      <main aria-live="polite" className="flex min-h-dvh flex-col bg-[#FBF5EE] text-[#2F2823]">
         <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           写真を送信中
         </div>
@@ -160,7 +160,7 @@ export default function DemoPage() {
 
   if (step === "sent") {
     return (
-      <main aria-live="polite" className="flex min-h-screen flex-col bg-[#FBF5EE] text-[#2F2823]">
+      <main aria-live="polite" className="flex min-h-dvh flex-col bg-[#FBF5EE] text-[#2F2823]">
         <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
           写真を送信しました
         </div>
@@ -181,7 +181,7 @@ export default function DemoPage() {
             </button>
             <button
               onClick={() => router.push("/")}
-              className="w-full py-2 text-sm text-[#6E5A4B]"
+              className="w-full py-3 text-sm text-[#6E5A4B]"
             >
               トップに戻る
             </button>
@@ -192,23 +192,24 @@ export default function DemoPage() {
   }
 
   return (
-    <main aria-live="polite" className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+    <main aria-live="polite" className="min-h-dvh bg-[#FBF5EE] text-[#2F2823]">
       <div className="bg-[#B8501A] py-1.5 text-center text-xs font-medium text-white">
         写真で収納を整える
       </div>
 
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
-        <div className="space-y-3">
+      <div className="mx-auto max-w-2xl space-y-4 px-4 py-4">
+        <div className="space-y-2">
           <p className="inline-flex rounded-full bg-[#F5C842]/25 px-3 py-1 text-xs font-semibold text-[#8A5A10]">
             Step 1
           </p>
-          <h1 className="text-3xl font-bold tracking-tight">部屋と収納の余白を写す</h1>
+          <h1 className="text-2xl font-bold tracking-tight">部屋と収納の余白を写す</h1>
           <p className="text-sm leading-6 text-[#6E5A4B]">
-            「部屋全体」「収納スペース」のどちらか1枚から送れます。2枚あると提案の精度が上がります。
+            どちらか1枚でOK。2枚あると提案の精度が上がります。
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* スマホ1画面に収めるため常に2列（旧: sm以上のみ2列） */}
+        <div className="grid grid-cols-2 gap-3">
           <PhotoCapture
             title="部屋全体を撮る"
             description="家具の配置や床まわりが分かる写真"
@@ -250,7 +251,7 @@ export default function DemoPage() {
           onChange={(event) => handlePhotoChange(event, setStoragePhoto, setStorageFile)}
         />
 
-        <div className="rounded-lg border border-[#E8D8C7] bg-white/70 p-4 text-sm shadow-sm">
+        <div className="rounded-lg border border-[#E8D8C7] bg-white/70 px-4 py-3 text-sm shadow-sm">
           {hasBothPhotos ? (
             <p className="font-semibold text-[#2D7C62]">2枚とも撮影できました</p>
           ) : hasAnyPhoto ? (
@@ -268,7 +269,7 @@ export default function DemoPage() {
           <p role="alert" className="text-sm text-red-700 text-center">{errorMessage}</p>
         )}
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <button
             onClick={handleAnalyze}
             disabled={!hasAnyPhoto}
@@ -278,7 +279,7 @@ export default function DemoPage() {
           </button>
           <button
             onClick={() => router.push("/")}
-            className="w-full py-2 text-sm text-[#6E5A4B]"
+            className="w-full py-3 text-sm text-[#6E5A4B]"
           >
             トップに戻る
           </button>
@@ -304,30 +305,30 @@ function PhotoCapture({
   onClear: () => void
 }) {
   return (
-    <section className="space-y-3 rounded-lg border border-[#E8D8C7] bg-white/70 p-4 shadow-sm">
+    <section className="flex flex-col gap-2 rounded-lg border border-[#E8D8C7] bg-white/70 p-3 shadow-sm">
       <div>
-        <h2 className="font-semibold text-[#2F2823]">{title}</h2>
-        <p className="mt-1 text-xs text-[#6E5A4B]">{description}</p>
+        <h2 className="text-sm font-semibold text-[#2F2823]">{title}</h2>
+        <p className="mt-0.5 text-xs leading-4 text-[#6E5A4B]">{description}</p>
       </div>
 
       {photo ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photo}
             alt={`${title}のプレビュー`}
-            className="aspect-[4/3] w-full rounded-lg bg-[#F9F3EC] object-cover"
+            className="aspect-square w-full rounded-lg bg-[#F9F3EC] object-cover"
           />
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={onRetake}
-              className="rounded-lg border border-[#E1CDB9] py-2 text-sm font-medium text-[#6E5A4B] transition-colors hover:bg-[#FBF5EE]"
+              className="rounded-lg border border-[#E1CDB9] py-1.5 text-xs font-medium text-[#6E5A4B] transition-colors hover:bg-[#FBF5EE]"
             >
               撮り直し
             </button>
             <button
               onClick={onClear}
-              className="rounded-lg py-2 text-sm font-medium text-[#6E5A4B] transition-colors hover:bg-[#FBF5EE]"
+              className="rounded-lg py-1.5 text-xs font-medium text-[#6E5A4B] transition-colors hover:bg-[#FBF5EE]"
             >
               削除
             </button>
@@ -336,8 +337,9 @@ function PhotoCapture({
       ) : (
         <button
           onClick={onCapture}
-          className="aspect-[4/3] w-full rounded-lg border-2 border-dashed border-[#E1CDB9] bg-[#FBF5EE] text-sm font-semibold text-[#6E5A4B] transition-colors hover:border-[#D96B2D] hover:bg-[#F9F3EC] hover:text-[#C85A20]"
+          className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-[#E1CDB9] bg-[#FBF5EE] text-sm font-semibold text-[#6E5A4B] transition-colors hover:border-[#D96B2D] hover:bg-[#F9F3EC] hover:text-[#C85A20]"
         >
+          <span aria-hidden="true" className="text-3xl">📷</span>
           撮影する
         </button>
       )}

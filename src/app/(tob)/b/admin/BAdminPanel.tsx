@@ -163,7 +163,7 @@ export default function BAdminPanel({
   const visiblePending = pendingScans.filter((s) => !sentIds.has(s.id))
 
   return (
-    <div className="flex flex-col h-[calc(100vh-49px)]">
+    <div className="flex flex-col h-[calc(100dvh-49px)]">
       {/* ヘッダー */}
       <div className="border-b border-slate-200 bg-white px-4 py-2 flex items-center gap-3">
         <h1 className="text-sm font-bold text-slate-700">管理画面</h1>
@@ -262,13 +262,13 @@ export default function BAdminPanel({
                     <div
                       ref={imageRef}
                       onClick={handleImageClick}
-                      className="relative cursor-crosshair rounded-xl overflow-hidden border border-slate-200 bg-slate-900 select-none"
+                      className="relative mx-auto w-fit cursor-crosshair rounded-xl overflow-hidden border border-slate-200 bg-slate-900 select-none"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={selectedScan.image_url}
                         alt={selectedScan.area_name}
-                        className="w-full object-contain max-h-[50vh]"
+                        className="block max-h-[50vh] w-auto max-w-full"
                         draggable={false}
                       />
                       {markers.map((marker, i) => (

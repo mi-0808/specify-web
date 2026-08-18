@@ -21,7 +21,7 @@ export default async function AdminPage() {
     .order("created_at", { ascending: true }) as { data: SuggestionRow[] | null }
 
   return (
-    <main className="min-h-screen bg-[#FBF5EE] text-[#2F2823]">
+    <main className="min-h-dvh bg-[#FBF5EE] text-[#2F2823]">
       <header className="border-b border-[#E8D8C7] bg-[#FBF5EE]/95 px-4 py-4">
         <div className="mx-auto max-w-3xl">
           <h1 className="text-lg font-bold tracking-tight">管理画面</h1>

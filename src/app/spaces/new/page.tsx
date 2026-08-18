@@ -65,7 +65,7 @@ export default function NewSpacePage() {
   // ステップ1: スペース名入力
   if (step === "form") {
     return (
-      <main className="min-h-screen bg-gray-50 flex flex-col">
+      <main className="min-h-dvh bg-gray-50 flex flex-col">
         <header className="bg-white border-b px-4 py-3">
           <button onClick={() => router.back()} className="text-blue-600 text-sm">
             ← 戻る
@@ -107,7 +107,7 @@ export default function NewSpacePage() {
   // ステップ2: AR計測
   if (step === "ar") {
     return (
-      <div className="w-full h-screen">
+      <div className="w-full h-dvh">
         <ARMeasureScene onMeasured={handleMeasured} />
         <button
           onClick={() => setStep("form")}
@@ -121,7 +121,7 @@ export default function NewSpacePage() {
 
   // ステップ3: 確認・高さ入力・保存
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
+    <main className="min-h-dvh bg-gray-50 flex flex-col">
       <header className="bg-white border-b px-4 py-3">
         <button onClick={() => setStep("ar")} className="text-blue-600 text-sm">
           ← 再計測

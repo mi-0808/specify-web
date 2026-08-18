@@ -77,7 +77,7 @@ export default function BScanPage() {
     const failed = sendState === "error"
 
     return (
-      <main aria-live="polite" className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
+      <main aria-live="polite" className="flex flex-col items-center justify-center min-h-[calc(100dvh-49px)] px-4 text-center">
         <div className="max-w-sm w-full space-y-6">
           <div
             className={`flex h-16 w-16 mx-auto items-center justify-center rounded-full text-3xl ${
@@ -95,7 +95,8 @@ export default function BScanPage() {
             ) : (
               <p className="text-sm text-slate-500 leading-6">
                 レポートが完成次第、登録メールアドレスにお知らせします。
-                <br />この画面は閉じていただいて構いません。
+                {/* アップロード中にタブを閉じると送信が消えるので、完了後にだけ言う */}
+                {sendState === "ok" && "この画面は閉じていただいて構いません。"}
               </p>
             )}
             {sendState === "sending" && (
@@ -113,7 +114,7 @@ export default function BScanPage() {
                 </button>
                 <button
                   onClick={() => setStep("capture")}
-                  className="w-full py-2 text-sm text-slate-600"
+                  className="w-full py-3 text-sm text-slate-600"
                 >
                   撮影画面に戻る
                 </button>
@@ -128,7 +129,7 @@ export default function BScanPage() {
                 </button>
                 <button
                   onClick={() => { setStep("input"); setAreaName(""); setPhoto(null); setFile(null) }}
-                  className="w-full py-2 text-sm text-slate-600"
+                  className="w-full py-3 text-sm text-slate-600"
                 >
                   続けて撮影する
                 </button>
@@ -142,11 +143,11 @@ export default function BScanPage() {
 
   if (step === "capture") {
     return (
-      <main aria-live="polite" className="min-h-[calc(100vh-49px)] px-4 py-6">
+      <main aria-live="polite" className="min-h-[calc(100dvh-49px)] px-4 py-6">
         <div className="mx-auto max-w-lg space-y-5">
           <button
             onClick={() => setStep("input")}
-            className="text-sm text-slate-600 hover:text-slate-600"
+            className="-mx-2 inline-flex min-h-11 items-center px-2 text-sm text-slate-600 hover:text-slate-900"
           >
             ← 戻る
           </button>
@@ -193,7 +194,7 @@ export default function BScanPage() {
           {photo && (
             <button
               onClick={() => { setPhoto(null); setFile(null) }}
-              className="text-sm text-slate-600 underline"
+              className="-mx-2 inline-flex min-h-11 items-center px-2 text-sm text-slate-600 underline hover:text-slate-900"
             >
               撮り直す
             </button>
@@ -214,7 +215,7 @@ export default function BScanPage() {
   }
 
   return (
-    <main aria-live="polite" className="min-h-[calc(100vh-49px)] px-4 py-6">
+    <main aria-live="polite" className="min-h-[calc(100dvh-49px)] px-4 py-6">
       <div className="mx-auto max-w-lg space-y-5">
         <div className="space-y-1">
           <p className="text-xs font-semibold text-blue-600">Step 1 / 2</p>

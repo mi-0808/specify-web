@@ -33,29 +33,50 @@ export default function BReportPage() {
   const router = useRouter()
   const [report, setReport] = useState<Report | null>(null)
   const [pending, setPending] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [activeMarker, setActiveMarker] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/b/report?scan_id=${id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.status === "done") {
-          setReport(data)
-        } else {
-          setPending(true)
-        }
+        if (data.status === "done") setReport(data)
+        else if (data.status === "pending") setPending(true)
+        // 401/404/通信エラーを「作成中」と見せると来ないメールを待たせてしまう
+        else setFailed(true)
       })
-      .catch(() => setPending(true))
+      .catch(() => setFailed(true))
   }, [id])
+
+  if (failed) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-[calc(100dvh-49px)] px-4 text-center">
+        <div className="max-w-sm w-full space-y-4">
+          <div className="text-4xl">⚠️</div>
+          <h1 className="text-xl font-bold text-slate-900">レポートを読み込めませんでした</h1>
+          <p role="alert" className="text-sm text-slate-500">時間をおいて再読み込みするか、エリア一覧から開き直してください。</p>
+          <button
+            onClick={() => location.reload()}
+            className="w-full rounded-lg bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            再読み込み
+          </button>
+          <Link href="/b/workspace" className="inline-block py-3 text-sm text-blue-600 hover:underline">
+            エリア一覧に戻る
+          </Link>
+        </div>
+      </main>
+    )
+  }
 
   if (pending) {
     return (
-      <main aria-live="polite" className="flex flex-col items-center justify-center min-h-[calc(100vh-49px)] px-4 text-center">
+      <main aria-live="polite" className="flex flex-col items-center justify-center min-h-[calc(100dvh-49px)] px-4 text-center">
         <div className="max-w-sm w-full space-y-4">
           <div className="text-4xl">⏳</div>
           <h1 className="text-xl font-bold text-slate-900">レポートを作成中です</h1>
           <p className="text-sm text-slate-500">完成次第、登録メールアドレスにお知らせします。</p>
-          <Link href="/b/workspace" className="text-sm text-blue-600 hover:underline">
+          <Link href="/b/workspace" className="inline-block py-3 text-sm text-blue-600 hover:underline">
             エリア一覧に戻る
           </Link>
         </div>
@@ -65,14 +86,14 @@ export default function BReportPage() {
 
   if (!report) {
     return (
-      <main aria-live="polite" className="flex items-center justify-center min-h-[calc(100vh-49px)]">
+      <main aria-live="polite" className="flex items-center justify-center min-h-[calc(100dvh-49px)]">
         <div className="text-sm text-slate-600">読み込み中...</div>
       </main>
     )
   }
 
   return (
-    <main aria-live="polite" className="min-h-[calc(100vh-49px)] px-4 py-6">
+    <main aria-live="polite" className="min-h-[calc(100dvh-49px)] px-4 py-6">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -94,12 +115,13 @@ export default function BReportPage() {
         </div>
 
         {/* 画像マーカービュー */}
-        <div className="relative w-full rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900">
+        {/* 枠を画像にぴったり合わせる（object-contain の余白があると % 座標のマーカーがずれる） */}
+        <div className="relative mx-auto w-fit rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={report.image_url}
             alt={report.area_name}
-            className="w-full object-contain max-h-[60vh]"
+            className="block max-h-[60dvh] w-auto max-w-full"
           />
           {report.markers.map((marker, i) => (
             <button
@@ -150,7 +172,7 @@ export default function BReportPage() {
           </p>
         )}
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
           <button
             onClick={() => router.push("/b/scan")}
             className="flex-1 rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"

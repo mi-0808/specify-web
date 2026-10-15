@@ -4,6 +4,7 @@ SNSで見た理想の部屋を、今買える家具の「レシピ」にする W
 雰囲気と予算から、ニトリ・IKEA・無印などで実際に買える商品の組み合わせ（商品・店・価格・総額）を出す。
 
 - 企画書（部屋のレシピ）: [docs/specify-recipe-plan.md](docs/specify-recipe-plan.md)
+- MVP 設計書: [docs/specify-recipe-mvp.md](docs/specify-recipe-mvp.md)
 - デザイン規約: [docs/design-guidelines.md](docs/design-guidelines.md)
 
 ## 技術スタック
@@ -42,8 +43,15 @@ npm run dev
 
 | パス | 役割 |
 |---|---|
-| `/` | トップ |
+| `/` | トップ（入口） |
+| `/start` | 雰囲気を選ぶ |
+| `/start/[style]` | 予算を選ぶ |
+| `/recipes/[id]` | レシピ（保存・「買った」の記録） |
+| `/home` | マイページ（保存したレシピと次の一手） |
 | `/login` | ログイン・新規登録 |
+
+レシピを見るまでは会員登録なしで使える。保存・記録・マイページは会員登録が必要。
+レシピのデータは `src/data/recipes.ts` に書く。
 
 ## 配色
 

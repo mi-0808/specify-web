@@ -31,11 +31,7 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith("/login");
-  const isPublicRoute =
-    pathname === "/" ||
-    pathname === "/b" ||
-    isAuthRoute ||
-    pathname.startsWith("/demo");
+  const isPublicRoute = pathname === "/" || isAuthRoute;
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -47,7 +43,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isAuthRoute) {
     const next = request.nextUrl.searchParams.get("next");
     const url = request.nextUrl.clone();
-    url.pathname = next ?? "/dashboard";
+    url.pathname = next ?? "/";
     url.search = "";
     return NextResponse.redirect(url);
   }

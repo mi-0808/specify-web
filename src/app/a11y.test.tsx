@@ -3,7 +3,8 @@ import { render } from "@testing-library/react"
 import axe from "axe-core"
 import HomePage from "./page"
 import LoginPage from "./(auth)/login/page"
-import DemoPage from "./demo/page"
+import StartPage from "./start/page"
+import BudgetPage from "./start/[style]/page"
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
@@ -12,7 +13,12 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({ auth: {} }) }))
 
 // ponytail: 静的にレンダーできる公開ページのみ。SSR/認証ページは追加時にここへ足す
-const pages = { HomePage, LoginPage, DemoPage }
+const pages = {
+  HomePage,
+  LoginPage,
+  StartPage,
+  BudgetPage: await BudgetPage({ params: Promise.resolve({ style: "korean" }) }).then((el) => () => el),
+}
 
 describe("axe (WCAG 2.1 AA)", () => {
   for (const [name, Page] of Object.entries(pages)) {

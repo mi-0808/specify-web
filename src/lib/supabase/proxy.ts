@@ -31,11 +31,9 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith("/login");
+  // レシピを見るまでは会員登録なしで使える。保存・記録・マイページは会員登録が必要
   const isPublicRoute =
-    pathname === "/" ||
-    pathname === "/b" ||
-    isAuthRoute ||
-    pathname.startsWith("/demo");
+    pathname === "/" || isAuthRoute || pathname.startsWith("/start") || pathname.startsWith("/recipes");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -47,7 +45,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isAuthRoute) {
     const next = request.nextUrl.searchParams.get("next");
     const url = request.nextUrl.clone();
-    url.pathname = next ?? "/dashboard";
+    url.pathname = next ?? "/home";
     url.search = "";
     return NextResponse.redirect(url);
   }

@@ -18,6 +18,7 @@ export type RecipeItem = {
   shop: Shop
   price: number // 税込・円
   url: string
+  image: string // 店が共有用に出している商品画像（og:image）。直接表示し、こちらには保存しない
   reason: string
   checkedAt: string // YYYY-MM-DD
 }
@@ -32,11 +33,11 @@ export type Recipe = {
   items: RecipeItem[] // 買う順
 }
 
-export const SHOPS: Record<Shop, { name: string; host: string }> = {
-  nitori: { name: "ニトリ", host: "www.nitori-net.jp" },
-  ikea: { name: "IKEA", host: "www.ikea.com" },
-  muji: { name: "無印良品", host: "www.muji.com" },
-  "3coins": { name: "3COINS", host: "www.palcloset.jp" },
+export const SHOPS: Record<Shop, { name: string; host: string; imageHost: string }> = {
+  nitori: { name: "ニトリ", host: "www.nitori-net.jp", imageHost: "www.nitori-net.jp" },
+  ikea: { name: "IKEA", host: "www.ikea.com", imageHost: "www.ikea.com" },
+  muji: { name: "無印良品", host: "www.muji.com", imageHost: "www.muji.com" },
+  "3coins": { name: "3COINS", host: "www.palcloset.jp", imageHost: "contents.palcloset.jp" },
 }
 
 export const STYLES: Style[] = [
@@ -58,6 +59,7 @@ export const RECIPES: Recipe[] = [
         shop: "nitori",
         price: 9990,
         url: "https://www.nitori-net.jp/ec/product/4524370480379/",
+        image: "https://www.nitori-net.jp/ecstatic/image/product/4524370480379/452437048037901.jpg?ts=20251121115210495",
         reason: "床の面積が一番広いので、1点で雰囲気が変わる。ポコポコした質感が韓国風の定番",
         checkedAt: "2026-10-15",
       },
@@ -68,6 +70,7 @@ export const RECIPES: Recipe[] = [
         shop: "nitori",
         price: 5990,
         url: "https://www.nitori-net.jp/ec/product/5657405/",
+        image: "https://www.nitori-net.jp/ecstatic/image/product/5657405/565740501.jpg?ts=20260105073638832",
         reason: "ベッドに掛けるだけで、イブル風のキルト素材になる",
         checkedAt: "2026-10-15",
       },
@@ -78,6 +81,7 @@ export const RECIPES: Recipe[] = [
         shop: "nitori",
         price: 4990,
         url: "https://www.nitori-net.jp/ec/product/7316314/",
+        image: "https://www.nitori-net.jp/ecstatic/image/product/7316311/731631101.jpg?ts=20210914112210055",
         reason: "白い光が入る窓辺は、韓国風の写真で必ず映る場所",
         checkedAt: "2026-10-15",
       },
@@ -88,6 +92,7 @@ export const RECIPES: Recipe[] = [
         shop: "nitori",
         price: 4990,
         url: "https://www.nitori-net.jp/ec/product/8100739s/",
+        image: "https://www.nitori-net.jp/ecstatic/image/product/8100739/810073901.jpg?ts=20260105081831970",
         reason: "アーチ型は韓国風の象徴。立てかけ式なので壁に穴を開けない",
         checkedAt: "2026-10-15",
       },
@@ -98,6 +103,7 @@ export const RECIPES: Recipe[] = [
         shop: "ikea",
         price: 3999,
         url: "https://www.ikea.com/jp/ja/p/taernaby-table-lamp-dimmable-beige-50508077/",
+        image: "https://www.ikea.com/jp/ja/images/products/taernaby-table-lamp-dimmable-beige__1188960_pe899632_s5.jpg",
         reason: "きのこ型のランプ。夜の暖かい光で写真映えする",
         checkedAt: "2026-10-15",
       },
@@ -108,6 +114,7 @@ export const RECIPES: Recipe[] = [
         shop: "ikea",
         price: 1999,
         url: "https://www.ikea.com/jp/ja/p/gladom-tray-table-white-50337820/",
+        image: "https://www.ikea.com/jp/ja/images/products/gladom-tray-table-white__0470732_pe612912_s5.jpg",
         reason: "ランプや花瓶の置き場になる。狭い部屋でも邪魔にならない",
         checkedAt: "2026-10-15",
       },
@@ -118,6 +125,7 @@ export const RECIPES: Recipe[] = [
         shop: "nitori",
         price: 1990,
         url: "https://www.nitori-net.jp/ec/product/5780958/",
+        image: "https://www.nitori-net.jp/ecstatic/image/product/5780958/578095801.jpg?ts=20210603153654175",
         reason: "花の形のクッションは、韓国風でよく見る小物",
         checkedAt: "2026-10-15",
       },
@@ -128,6 +136,7 @@ export const RECIPES: Recipe[] = [
         shop: "3coins",
         price: 1650,
         url: "https://www.palcloset.jp/display/item/2622-TUFTA3-000/?b=3coins",
+        image: "https://contents.palcloset.jp/static/images/item/743822_3060805_1.jpg",
         reason: "立てかけて飾れる。ポコポコした質感がラグとそろう",
         checkedAt: "2026-10-15",
       },
@@ -138,6 +147,7 @@ export const RECIPES: Recipe[] = [
         shop: "ikea",
         price: 399,
         url: "https://www.ikea.com/jp/ja/p/beraekna-vase-clear-glass-50457775/",
+        image: "https://www.ikea.com/jp/ja/images/products/beraekna-vase-clear-glass__0639826_pe699591_s5.jpg",
         reason: "透明ガラスに白い花の組み合わせが定番",
         checkedAt: "2026-10-15",
       },
@@ -148,6 +158,7 @@ export const RECIPES: Recipe[] = [
         shop: "ikea",
         price: 1497,
         url: "https://www.ikea.com/jp/ja/p/smycka-artificial-flower-sweet-pea-white-50409770/",
+        image: "https://www.ikea.com/jp/ja/images/products/smycka-artificial-flower-sweet-pea-white__0611454_pe685452_s5.jpg",
         reason: "枯れないので手間がかからない",
         checkedAt: "2026-10-15",
       },

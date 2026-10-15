@@ -13,6 +13,7 @@ import {
 import { SiteHeader, pageShell, primaryButton } from "../../_components/SiteHeader"
 import { togglePurchase, toggleSave } from "./actions"
 import { ToggleButton } from "./ToggleButton"
+import { ProductPhoto } from "../../_components/ProductPhoto"
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -92,6 +93,9 @@ export default async function RecipePage({ params }: Props) {
               <p className="text-[0.9375rem] font-semibold">
                 {index === 0 ? "最初の1点" : `${index + 1}点目`}・{item.role}
               </p>
+              <a href={item.url} target="_blank" rel="noopener noreferrer" tabIndex={-1} aria-hidden="true" className="block">
+                <ProductPhoto item={item} />
+              </a>
               <div className="space-y-1">
                 <a
                   href={item.url}

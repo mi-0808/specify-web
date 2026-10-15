@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { RECIPES, SHOPS, budgetLabel, findStyle, yen } from "@/data/recipes"
 import { SiteHeader, pageShell, primaryButton } from "../_components/SiteHeader"
+import { ProductPhoto } from "../_components/ProductPhoto"
 
 export const metadata: Metadata = { title: "マイページ | Specify" }
 
@@ -55,8 +56,9 @@ export default async function MyHomePage() {
                     </p>
                   </div>
                   {next ? (
-                    <div className="space-y-1 rounded-xl bg-primary-container p-4 text-on-primary-container">
+                    <div className="space-y-2 rounded-xl bg-primary-container p-4 text-on-primary-container">
                       <p className="text-[0.9375rem] font-semibold">次の一手・{next.role}</p>
+                      <ProductPhoto item={next} className="w-32" />
                       <a
                         href={next.url}
                         target="_blank"

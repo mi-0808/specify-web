@@ -5,7 +5,7 @@ import { useActionState, useRef } from "react"
 import { createGenre, type GenreState } from "../genres/actions"
 
 const plusClass =
-  "focus-ring inline-flex size-11 items-center justify-center rounded-full border-2 border-dashed border-outline text-xl text-on-surface-variant transition-colors hover:bg-surface-container-low"
+  "focus-ring press-bounce inline-flex size-11 items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface transition-colors hover:bg-surface-container-low"
 
 const input =
   "w-full rounded-lg border border-outline bg-surface-container-lowest px-3 py-2.5 text-base text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -52,13 +52,15 @@ export function GenreCreate({ loggedIn }: { loggedIn: boolean }) {
   return (
     <>
       <button type="button" aria-label="ジャンルを作る" onClick={() => ref.current?.showModal()} className={plusClass}>
-        ＋
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </button>
       <dialog
         ref={ref}
         aria-labelledby="genre-dialog-title"
         onClick={(e) => e.target === ref.current && ref.current.close()} // 背景をクリックで閉じる
-        className="m-auto w-[min(22rem,calc(100vw-2rem))] rounded-2xl bg-surface-container-lowest p-5 text-on-surface shadow-xl backdrop:bg-black/40"
+        className="m-auto w-[min(22rem,calc(100vw-2rem))] rounded-[24px] bg-surface-container-lowest p-5 text-on-surface shadow-xl backdrop:bg-black/30 backdrop:backdrop-blur-sm"
       >
         <div className="mb-3 flex items-center justify-between">
           <h2 id="genre-dialog-title" className="text-[1.0625rem] font-semibold">

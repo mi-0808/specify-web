@@ -1,12 +1,11 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
-import { signOut } from "./actions"
 
-type Current = "discover" | "saved"
+type Current = "discover" | "saved" | "me"
 
 const link = "focus-ring inline-flex min-h-11 items-center rounded px-2 text-[0.9375rem] transition-colors hover:text-on-surface"
 
-// 右上にリンクを横一列で並べる。スマホで入りきらないときはロゴの下に回る
+// パソコンだけ、右上にリンクを横一列で並べる（スマホは下のタブバー）。ログアウトはマイページの中
 export async function SiteHeader({ current }: { current?: Current }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,7 +23,7 @@ export async function SiteHeader({ current }: { current?: Current }) {
   )
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+    <header className="hidden flex-wrap items-center justify-between gap-x-6 gap-y-1 md:flex">
       <Link href="/" className="focus-ring rounded text-lg font-bold tracking-tight">
         Specify
       </Link>
@@ -33,13 +32,7 @@ export async function SiteHeader({ current }: { current?: Current }) {
           {item("discover", "/", "さがす")}
           {user && item("saved", "/saved", "保存した部屋")}
           {user ? (
-            <li>
-              <form action={signOut}>
-                <button type="submit" className={`${link} text-on-surface-variant`}>
-                  ログアウト
-                </button>
-              </form>
-            </li>
+            item("me", "/me", "マイページ")
           ) : (
             <>
               <li>

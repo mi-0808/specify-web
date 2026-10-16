@@ -25,13 +25,21 @@ export async function addRoom(_prev: AddState, formData: FormData): Promise<AddS
   const videoId = youtubeIdFromUrl(String(formData.get("url") ?? ""))
   if (!videoId) return { error: "YouTube の動画のリンクを貼ってください。" }
 
+  // マイページの「自分が探索した部屋」に残す。すでにある部屋でも記録する
+  const remember = () =>
+    supabase.from("explored_rooms").upsert({ user_id: user.id, room_id: videoId, explored_at: new Date().toISOString() })
+
   const { data: existing } = await supabase.from("rooms").select("id").eq("id", videoId).maybeSingle()
-  if (existing) redirect(`/rooms/${videoId}`)
+  if (existing) {
+    await remember()
+    redirect(`/rooms/${videoId}`)
+  }
 
   const apiKey = process.env.YOUTUBE_API_KEY
-  if (!apiKey) return { error: "今は追加できません。時間をおいてもう一度お試しください。" }
+  if (!apiKey) return { error: "今は探索できません。時間をおいてもう一度お試しください。" }
 
   const result = await importVideo(apiKey, createAdminClient(), videoId)
   if (!result.ok) return { error: MESSAGES[result.reason] }
+  await remember()
   redirect(`/rooms/${result.roomId}`)
 }

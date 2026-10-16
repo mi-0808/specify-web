@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUser } from "@/lib/supabase/server"
 import { shopName } from "@/lib/collector/shops"
 import { SiteHeader } from "../../_components/SiteHeader"
 import { SaveButton } from "./SaveButton"
@@ -37,7 +37,7 @@ export default async function RoomPage({ params }: Props) {
   if (!room) notFound()
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   const [{ data: saved }, { data: genres }, { data: myAdds }] = await Promise.all([
     user ? supabase.from("saved_rooms").select("room_id").eq("room_id", room.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.rpc("genres_for_room", { rid: room.id }).select("id, name, created_by"),

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { LinkSpinner } from "./LinkSpinner"
 
 type Chip = { key: string; label: string; href: string; active: boolean }
 
@@ -24,13 +25,14 @@ export function FilterChips({ chips }: { chips: Chip[] }) {
           href={c.href}
           onClick={() => setTapped(c)}
           aria-current={active ? "page" : undefined}
-          className={`focus-ring inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium ${
+          className={`focus-ring inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium ${
             active
               ? "bg-secondary-container text-on-secondary-container"
               : "border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low"
           }`}
         >
           {c.label}
+          <LinkSpinner />
         </Link>
       </li>
     )

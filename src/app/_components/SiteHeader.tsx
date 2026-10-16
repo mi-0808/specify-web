@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { getUser } from "@/lib/supabase/server"
 
 type Current = "discover" | "saved" | "me"
 
@@ -7,8 +7,7 @@ const link = "focus-ring inline-flex min-h-11 items-center rounded px-2 text-[0.
 
 // パソコンだけ、右上にリンクを横一列で並べる（スマホは下のタブバー）。ログアウトはマイページの中
 export async function SiteHeader({ current }: { current?: Current }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
 
   const item = (key: Current, href: string, label: string) => (
     <li>

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { LinkSpinner } from "./LinkSpinner"
 
 export type RoomCardData = {
   id: string
@@ -12,10 +13,11 @@ export function RoomCard({ room }: { room: RoomCardData }) {
   return (
     <Link
       href={`/rooms/${room.id}`}
-      className="focus-ring soft-card group block overflow-hidden rounded-[20px] bg-surface-container-lowest hover:bg-surface-container-low"
+      className="focus-ring soft-card group relative block overflow-hidden rounded-[20px] bg-surface-container-lowest hover:bg-surface-container-low"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- YouTube のサムネイルをそのまま表示する */}
       <img src={room.thumbnail_url} alt="" loading="lazy" className="aspect-video w-full object-cover" />
+      <LinkSpinner className="absolute right-3 top-3 size-5 border-white/60 border-t-primary" />
       <div className="space-y-1 p-4">
         <p className="line-clamp-2 text-[1.0625rem] font-semibold leading-[1.5]">{room.title}</p>
         <p className="text-[0.9375rem] text-on-surface-variant">
@@ -31,7 +33,7 @@ export function AddRoomCard() {
   return (
     <Link
       href="/add"
-      className="focus-ring soft-card group block overflow-hidden rounded-[20px] bg-surface-container hover:bg-surface-container-high"
+      className="focus-ring soft-card group relative block overflow-hidden rounded-[20px] bg-surface-container hover:bg-surface-container-high"
     >
       <div className="flex aspect-video w-full items-center justify-center bg-surface-container-high">
         <span className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-on-primary group-hover:bg-primary-hover">

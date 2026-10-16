@@ -100,7 +100,7 @@ body {
   color: var(--on-surface);
 }
 
-/* 押したらすぐ反応：縮む・弾む動きは付けず、押している間だけ薄くする。ダブルタップ拡大の待ちもなくす */
+/* 押したらすぐ反応：縮む・弾む動きは付けず、押している間だけ沈んだ色にする。ダブルタップ拡大の待ちもなくす */
 a,
 button {
   touch-action: manipulation;
@@ -108,7 +108,47 @@ button {
 }
 a:active,
 button:not(:disabled):active {
-  opacity: 0.7;
+  filter: brightness(0.9);
+}
+
+/* 読み込み中の印（NavProgress・LinkSpinner） */
+@layer components {
+  .nav-progress {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    left: 0;
+    z-index: 50;
+    height: 3px;
+    width: 0;
+    opacity: 0;
+    background: var(--primary);
+    pointer-events: none;
+  }
+  .nav-progress.go {
+    width: 85%;
+    opacity: 1;
+    transition: width 6s cubic-bezier(0.05, 0.8, 0.1, 1);
+  }
+  .nav-progress.done {
+    width: 100%;
+    opacity: 0;
+    transition: width 0.15s, opacity 0.2s 0.15s;
+  }
+  .spinner {
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    border: 2px solid var(--outline-variant);
+    border-top-color: var(--primary);
+    border-radius: 9999px;
+    animation: spin 0.6s linear infinite;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 @utility focus-ring {

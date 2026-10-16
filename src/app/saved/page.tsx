@@ -1,7 +1,7 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUser } from "@/lib/supabase/server"
 import { SiteHeader } from "../_components/SiteHeader"
 import { LargeTitle } from "../_components/LargeTitle"
 import { ROOM_CARD_SELECT, RoomCard, type RoomCardData } from "../_components/RoomCard"
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "保存した部屋 | Specify" }
 
 export default async function SavedPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   if (!user) redirect("/login?next=/saved")
 
   const { data, error } = await supabase

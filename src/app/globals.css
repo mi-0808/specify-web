@@ -29,6 +29,9 @@
   --on-error: #FFFFFF;
   --error-container: #FFDAD5;
   --on-error-container: #930009;
+  --inverse-surface: #3A2E29;
+  --inverse-on-surface: #FFEDE7;
+  --inverse-primary: #FFB596;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,6 +59,9 @@
     --on-error: #690004;
     --error-container: #930009;
     --on-error-container: #FFDAD5;
+    --inverse-surface: #F3DED7;
+    --inverse-on-surface: #3A2E29;
+    --inverse-primary: #A14007;
   }
 }
 
@@ -83,6 +89,9 @@
   --color-on-error: var(--on-error);
   --color-error-container: var(--error-container);
   --color-on-error-container: var(--on-error-container);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-on-surface: var(--inverse-on-surface);
+  --color-inverse-primary: var(--inverse-primary);
   --font-sans: system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
 }
 

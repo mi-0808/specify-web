@@ -13,7 +13,7 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
-  const next = searchParams.get("next") ?? "/home";
+  const next = searchParams.get("next") ?? "/";
   const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {

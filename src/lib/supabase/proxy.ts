@@ -31,9 +31,9 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith("/login");
-  // レシピを見るまでは会員登録なしで使える。保存・記録・マイページは会員登録が必要
+  // 部屋を眺めるのはログイン不要。収集処理は CRON_SECRET で守る
   const isPublicRoute =
-    pathname === "/" || isAuthRoute || pathname.startsWith("/start") || pathname.startsWith("/recipes");
+    pathname === "/" || isAuthRoute || pathname.startsWith("/rooms/") || pathname.startsWith("/api/cron/");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -45,7 +45,7 @@ export async function updateSession(request: NextRequest) {
   if (user && isAuthRoute) {
     const next = request.nextUrl.searchParams.get("next");
     const url = request.nextUrl.clone();
-    url.pathname = next ?? "/home";
+    url.pathname = next ?? "/";
     url.search = "";
     return NextResponse.redirect(url);
   }

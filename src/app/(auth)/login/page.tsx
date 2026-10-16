@@ -27,13 +27,17 @@ function LoginForm() {
     setMessage(null);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${location.origin}/auth/confirm?next=${encodeURIComponent(next)}` },
       });
       if (error) {
         setError(error.message);
+      } else if (data.session) {
+        // メール確認がオフなら登録と同時にログイン済み
+        router.push(next);
+        router.refresh();
       } else {
         setMessage("確認メールを送りました。メールを確認してください。");
       }

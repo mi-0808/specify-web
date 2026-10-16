@@ -5,7 +5,7 @@ import { useActionState, useRef } from "react"
 import { createGenre, type GenreState } from "../genres/actions"
 
 const plusClass =
-  "focus-ring press-bounce inline-flex size-11 items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface transition-colors hover:bg-surface-container-low"
+  "focus-ring inline-flex size-11 items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low"
 
 const input =
   "w-full rounded-lg border border-outline bg-surface-container-lowest px-3 py-2.5 text-base text-on-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"

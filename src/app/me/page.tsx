@@ -37,11 +37,11 @@ export default async function MyPage() {
             </p>
             <Link
               href="/login?signup=1&next=%2Fme"
-              className="focus-ring press block rounded-full bg-primary px-6 py-3.5 text-center font-semibold text-on-primary hover:bg-primary-hover"
+              className="focus-ring block rounded-full bg-primary px-6 py-3.5 text-center font-semibold text-on-primary hover:bg-primary-hover"
             >
               新規登録
             </Link>
-            <Link href="/login?next=%2Fme" className="focus-ring press block rounded-full border border-outline px-6 py-3.5 text-center text-primary">
+            <Link href="/login?next=%2Fme" className="focus-ring block rounded-full border border-outline px-6 py-3.5 text-center text-primary">
               ログイン
             </Link>
           </section>

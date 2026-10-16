@@ -96,7 +96,7 @@ function LoginForm() {
           type="submit"
           disabled={loading}
           aria-busy={loading}
-          className="w-full py-2.5 bg-primary text-on-primary rounded-lg font-medium hover:bg-primary-hover disabled:opacity-50 transition-colors"
+          className="w-full py-2.5 bg-primary text-on-primary rounded-lg font-medium hover:bg-primary-hover disabled:opacity-50"
         >
           {loading ? "処理中..." : isSignUp ? "アカウント作成" : "ログイン"}
         </button>

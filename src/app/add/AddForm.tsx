@@ -32,7 +32,7 @@ export function AddForm() {
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="focus-ring w-full rounded-full bg-primary px-6 py-3.5 text-base font-semibold text-on-primary transition-colors hover:bg-primary-hover disabled:opacity-60"
+        className="focus-ring w-full rounded-full bg-primary px-6 py-3.5 text-base font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-60"
       >
         {pending ? "動画の家具を調べています…" : "探索する"}
       </button>

@@ -106,3 +106,35 @@ body {
     outline-offset: 2px;
   }
 }
+
+/* Apple らしさ（docs/design-guidelines.md）：やわらかい影、押したときの縮み・弾み。動きは「視差効果を減らす」の人には付けない */
+@utility soft-card {
+  box-shadow: 0 1px 2px rgb(47 40 35 / 0.06), 0 6px 20px rgb(47 40 35 / 0.06);
+  @media (prefers-color-scheme: dark) {
+    box-shadow: 0 0 0 1px var(--outline-variant);
+  }
+}
+
+@utility press {
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+}
+
+@utility press-bounce {
+  @media (prefers-reduced-motion: no-preference) {
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    &:active {
+      transform: scale(0.86);
+    }
+  }
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  /* 接頭辞なしの1行だけ書く（-webkit- も並べると、ビルドで -webkit- 1行にまとめられて Chrome で消える） */
+  backdrop-filter: saturate(1.8) blur(20px);
+}

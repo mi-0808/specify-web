@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { SiteHeader } from "../_components/SiteHeader"
+import { LargeTitle } from "../_components/LargeTitle"
 import { ROOM_CARD_SELECT, RoomCard, type RoomCardData } from "../_components/RoomCard"
 
 export const metadata: Metadata = { title: "保存した部屋 | Specify" }
@@ -21,9 +22,9 @@ export default async function SavedPage() {
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-8 pt-4 md:pt-8">
         <SiteHeader current="saved" />
-        <h1 className="text-[1.75rem] font-bold leading-[1.4]">保存した部屋</h1>
+        <LargeTitle title="保存した部屋" alsoDesktop />
         {rooms.length === 0 ? (
           <div className="space-y-4 rounded-2xl bg-surface-container p-6">
             <p className="text-[1.0625rem] leading-[1.7]">気に入った部屋を保存すると、ここで見返せます。</p>

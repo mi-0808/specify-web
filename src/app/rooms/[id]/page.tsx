@@ -54,7 +54,7 @@ export default async function RoomPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-8 pt-4 md:pt-8">
         <SiteHeader />
 
         <section className="space-y-3">

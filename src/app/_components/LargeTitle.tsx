@@ -30,7 +30,7 @@ export function LargeTitle({
   return (
     <>
       <div ref={ref} className={`space-y-1 pt-[env(safe-area-inset-top)] ${alsoDesktop ? "" : "md:hidden"}`}>
-        {brand && <p className="text-[0.8125rem] font-bold tracking-tight">Specify</p>}
+        {brand && <p className="flex items-center gap-1.5 text-[0.8125rem] font-bold tracking-tight"><img src="/icon.svg" alt="" className="size-5" />Specify</p>}
         <h1 className="text-[2.125rem] font-bold leading-[1.2] tracking-tight md:text-[1.75rem]">{title}</h1>
         {subtitle && <p className="text-[0.9375rem] leading-[1.6] text-on-surface-variant">{subtitle}</p>}
       </div>

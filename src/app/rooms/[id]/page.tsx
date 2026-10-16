@@ -1,18 +1,24 @@
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { shopName } from "@/lib/collector/shops"
+import { SiteHeader } from "../../_components/SiteHeader"
+import { SaveButton } from "./SaveButton"
+import { GenreAdd } from "./GenreAdd"
+import { removeFromGenre } from "../../genres/actions"
+import Link from "next/link"
 
 type Props = { params: Promise<{ id: string }> }
 
 const VIDEO_ID = /^[\w-]{11}$/
+const chipClass =
+  "focus-ring inline-flex min-h-11 items-center rounded-full border border-outline px-4 text-[0.9375rem] text-on-surface hover:bg-surface-container-low"
 
 async function loadRoom(id: string) {
   if (!VIDEO_ID.test(id)) return null
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("rooms")
-    .select("id, title, channel_id, channel_title, room_items(position, label, url, shop_host, product_title, image_url)")
+    .select("id, title, channel_id, channel_title, tags, room_items(position, label, url, shop_host, product_title, image_url)")
     .eq("id", id)
     .order("position", { referencedTable: "room_items" })
     .maybeSingle()
@@ -30,17 +36,26 @@ export default async function RoomPage({ params }: Props) {
   const room = await loadRoom((await params).id)
   if (!room) notFound()
 
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const [{ data: saved }, { data: genres }, { data: allGenres }, { data: myAdds }] = await Promise.all([
+    user ? supabase.from("saved_rooms").select("room_id").eq("room_id", room.id).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.rpc("genres_for_room", { rid: room.id }).select("id, name, created_by"),
+    // ponytail: 選べるジャンルは名前順に200個まで。増えたら検索して選ぶ形にする
+    supabase.from("genres").select("id, name").order("name").limit(200),
+    user
+      ? supabase.from("room_genres").select("genre_id").eq("room_id", room.id).eq("added_by", user.id).eq("excluded", false)
+      : Promise.resolve({ data: [] as { genre_id: string }[] }),
+  ])
+  const inRoom = new Set((genres ?? []).map((g) => g.id))
+  const mine = new Set((myAdds ?? []).map((a) => a.genre_id))
+  // 外せるのは、ジャンルを作った本人か、自分で足した人だけ
+  const removable = (g: { id: string; created_by: string }) => !!user && (g.created_by === user.id || mine.has(g.id))
+
   return (
     <main className="min-h-screen bg-surface text-on-surface">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-8">
-        <header className="flex items-center justify-between">
-          <Link href="/" className="focus-ring rounded text-lg font-bold tracking-tight">
-            Specify
-          </Link>
-          <Link href="/" className="focus-ring rounded py-2 text-[0.9375rem] text-primary">
-            ← 部屋を探す
-          </Link>
-        </header>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-8 pt-4 md:pt-8">
+        <SiteHeader />
 
         <section className="space-y-3">
           <div className="overflow-hidden rounded-2xl bg-surface-container">
@@ -54,24 +69,63 @@ export default async function RoomPage({ params }: Props) {
             />
           </div>
           <h1 className="text-[1.375rem] font-bold leading-[1.4]">{room.title}</h1>
-          <p className="flex flex-wrap gap-x-4 gap-y-1 text-[0.9375rem]">
-            <a
-              href={`https://www.youtube.com/channel/${room.channel_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="focus-ring rounded text-on-surface-variant underline underline-offset-4"
-            >
-              {room.channel_title}
-            </a>
-            <a
-              href={`https://www.youtube.com/watch?v=${room.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="focus-ring rounded text-primary underline underline-offset-4"
-            >
-              YouTube で見る ↗
-            </a>
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <p className="flex flex-wrap gap-x-4 gap-y-1 pt-2.5 text-[0.9375rem]">
+              <a
+                href={`https://www.youtube.com/channel/${room.channel_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="focus-ring rounded text-on-surface-variant underline underline-offset-4"
+              >
+                {room.channel_title}
+              </a>
+              <a
+                href={`https://www.youtube.com/watch?v=${room.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="focus-ring rounded text-primary underline underline-offset-4"
+              >
+                YouTube で見る ↗
+              </a>
+            </p>
+            <SaveButton roomId={room.id} saved={!!saved} loggedIn={!!user} />
+          </div>
+        </section>
+
+        <section className="space-y-3" aria-labelledby="genres-title">
+          <h2 id="genres-title" className="text-[1.0625rem] font-semibold">ジャンル</h2>
+          <ul className="flex flex-wrap items-center gap-2">
+            {room.tags.map((t) => (
+              <li key={t}>
+                <Link href={`/?tag=${encodeURIComponent(t)}`} className={chipClass}>
+                  {t}
+                </Link>
+              </li>
+            ))}
+            {(genres ?? []).map((g) => (
+              <li key={g.id} className="flex items-center">
+                <Link href={`/?genre=${g.id}`} className={`${chipClass} ${removable(g) ? "rounded-r-none pr-2" : ""}`}>
+                  {g.name}
+                </Link>
+                {removable(g) && (
+                  <form action={removeFromGenre}>
+                    <input type="hidden" name="roomId" value={room.id} />
+                    <input type="hidden" name="genreId" value={g.id} />
+                    <button
+                      type="submit"
+                      aria-label={`「${g.name}」から外す`}
+                      className="focus-ring inline-flex min-h-11 items-center rounded-r-full border border-l-0 border-outline px-3 text-on-surface-variant hover:bg-surface-container-high"
+                    >
+                      ×
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+            <li>
+              <GenreAdd roomId={room.id} loggedIn={!!user} options={(allGenres ?? []).filter((g) => !inRoom.has(g.id))} />
+            </li>
+          </ul>
         </section>
 
         <section className="space-y-4">

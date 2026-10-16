@@ -68,13 +68,18 @@ HIG の Text Style（iOS 標準サイズ）を、そのまま px に置き換え
 - **面の重なりは、影ではなく色で表す。** 下から順に surface → surface-container-low → surface-container → surface-container-high → surface-container-highest。
 - **ダークモードに対応する。** `prefers-color-scheme: dark` で、ダーク用の値に切り替える。
 - **error は、エラーと取り消せない操作にだけ使う。** 装飾には使わない。
+- **差し色は意味で使い分ける。** 旧トップの黄色と緑を差し色にする。
+  - 黄色：注意を引いて、行動を促す案内（CTA、「ここでこうしてください」）に使う。まだ定義していないので、使うときに M3 のカスタムカラーとして `highlight-container: #FDCF49`／`on-highlight-container: #4B3900`（ダーク：`#584400`／`#FFE08F`。コントラスト比 7.5／7.3）を足す。
+  - 緑：成功・完了の知らせに使う（tertiary）。
+  - 飾りや区別のためだけには使わない。使うときは、先にモックで確認する。
 
 | ロール | 使う場所 |
 |---|---|
 | primary / on-primary | 主ボタン、選択中の状態、リンク |
 | primary-container / on-primary-container | 強調したいカード（「次の一手」など） |
 | secondary-container / on-secondary-container | 2番目のボタン、選択チップ |
-| tertiary-container / on-tertiary-container | タグ・ラベル（スタイル名など） |
+| tertiary-container / on-tertiary-container | 差し色の緑。**成功・完了の知らせ**（「作成しました」など）。それ以外には使わない |
+| inverse-surface / inverse-on-surface / inverse-primary | 吹き出し（会員登録の案内など） |
 | surface / on-surface / on-surface-variant | 背景、本文、補足文 |
 | outline / outline-variant | 入力欄・枠線ボタンの線 / 区切り線 |
 | error / on-error / error-container | エラー表示、削除ボタン |
@@ -146,6 +151,22 @@ HIG では、モーダルは「作業の流れを止めてでも必要なとき�
 - 開いたら、タイトルか最初の操作要素にフォーカスを移す。閉じたら、モーダルを開いたボタンにフォーカスを戻す。
 - `aria-labelledby` で、タイトルとダイアログを結び付ける。
 - 開いている間は、背景がスクロールしないようにする。
+
+---
+
+## 5.5 Apple らしさ（日常で使いたくなる見た目）
+
+モックで承認した形（2026-10-18）。ユーティリティは `src/app/globals.css` にある。
+
+| 要素 | 決まりごと |
+|---|---|
+| 大きな見出し | スマホは、ページの先頭に 34px の太字の見出し（`LargeTitle`）。スクロールして隠れたら、上にすりガラスの小さな見出しを出す |
+| すりガラス | 上の小さな見出しと下のタブバーは `glass`（背景 80%＋ぼかし）。`backdrop-filter` は接頭辞なしの1行だけ書く（`-webkit-` を並べると、ビルドでまとめられて Chrome で効かなくなる） |
+| 下のタブバー | スマホだけ。「さがす・保存・マイページ」の3つ。パソコンは上のヘッダーのまま |
+| カード | 角丸 20px、枠線の代わりにやわらかい影（`soft-card`）。ダークモードでは影の代わりに細い輪郭 |
+| 押したときの動き | カード・チップ・タブは押すと少し縮む（`press`）。ジャンルの「＋」は弾む（`press-bounce`）。「視差効果を減らす」の人には動きを付けない |
+| チップ | 白い背景にうすい枠線（`outline-variant`）。選択中は `secondary-container` で塗る。ジャンルを作る「＋」も同じ見た目にする（色で浮かせない） |
+| セーフエリア | `viewport-fit=cover` にして、iPhone の上下は `env(safe-area-inset-*)` の分だけ空ける |
 
 ---
 

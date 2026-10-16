@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
-import { detectTags, hashText, parseItems } from "./parse"
+import { detectTags, hashText, isInteriorVideo, parseItems } from "./parse"
 import { resolveProduct } from "./resolve"
 import { SHOP_HOSTS } from "./shops"
-import { getVideos, searchVideoIds } from "./youtube"
+import { getVideos, searchVideoIds, type Video } from "./youtube"
 
 export const QUERIES = [
   "一人暮らし ルームツアー",
@@ -37,20 +37,9 @@ export async function collect(apiKey: string, db: Db) {
   await mapLimit(videos, VIDEO_CONCURRENCY, async (v) => {
     if (!v.embeddable || !v.isPublic) return
     const hash = hashText(v.description)
-    const room = {
-      id: v.id,
-      title: v.title,
-      channel_id: v.channelId,
-      channel_title: v.channelTitle,
-      thumbnail_url: v.thumbnail,
-      published_at: v.publishedAt,
-      tags: detectTags(`${v.title}\n${v.description}`),
-      description_hash: hash,
-      refreshed_at: new Date().toISOString(),
-    }
 
     if (known.get(v.id) === hash) {
-      const { error } = await db.from("rooms").update(room).eq("id", v.id)
+      const { error } = await db.from("rooms").update(toRoom(v, hash)).eq("id", v.id)
       if (error) throw error
       alive.add(v.id)
       refreshed++
@@ -63,20 +52,10 @@ export async function collect(apiKey: string, db: Db) {
       return
     }
 
+    if (!isInteriorVideo(`${v.title}\n${v.description}`)) return
     const items = await resolveItems(v.description)
     if (items.length < MIN_ITEMS) return
-
-    // 家具を入れ終わるまでは hash を空にしておき、途中で失敗しても次回に読み直されるようにする
-    const { error: upsertError } = await db.from("rooms").upsert({ ...room, description_hash: "" })
-    if (upsertError) throw upsertError
-    const { error: deleteError } = await db.from("room_items").delete().eq("room_id", v.id)
-    if (deleteError) throw deleteError
-    const { error: insertError } = await db
-      .from("room_items")
-      .insert(items.map((item, position) => ({ ...item, room_id: v.id, position })))
-    if (insertError) throw insertError
-    const { error: hashError } = await db.from("rooms").update({ description_hash: hash }).eq("id", v.id)
-    if (hashError) throw hashError
+    await saveRoom(db, v, items)
     alive.add(v.id)
     added++
   })
@@ -87,6 +66,50 @@ export async function collect(apiKey: string, db: Db) {
     if (error) throw error
   }
   return { searched: searched.length, added, refreshed, removed: removed.length, skippedNew }
+}
+
+export type ImportResult =
+  | { ok: true; roomId: string }
+  | { ok: false; reason: "not-found" | "not-embeddable" | "not-interior" | "no-items" }
+
+// 貼られた動画1本を取り込む（/add）。家具・インテリアの動画で、買える家具が3つ以上あるときだけ保存する
+export async function importVideo(apiKey: string, db: Db, videoId: string): Promise<ImportResult> {
+  const [v] = await getVideos(apiKey, [videoId])
+  if (!v || !v.isPublic) return { ok: false, reason: "not-found" }
+  if (!v.embeddable) return { ok: false, reason: "not-embeddable" }
+  if (!isInteriorVideo(`${v.title}\n${v.description}`)) return { ok: false, reason: "not-interior" }
+  const items = await resolveItems(v.description)
+  if (items.length < MIN_ITEMS) return { ok: false, reason: "no-items" }
+  await saveRoom(db, v, items)
+  return { ok: true, roomId: v.id }
+}
+
+const toRoom = (v: Video, hash: string) => ({
+  id: v.id,
+  title: v.title,
+  channel_id: v.channelId,
+  channel_title: v.channelTitle,
+  thumbnail_url: v.thumbnail,
+  published_at: v.publishedAt,
+  tags: detectTags(`${v.title}\n${v.description}`),
+  description_hash: hash,
+  refreshed_at: new Date().toISOString(),
+})
+
+type Item = Awaited<ReturnType<typeof resolveItems>>[number]
+
+async function saveRoom(db: Db, v: Video, items: Item[]) {
+  // 家具を入れ終わるまでは hash を空にしておき、途中で失敗しても次回に読み直されるようにする
+  const { error: upsertError } = await db.from("rooms").upsert(toRoom(v, ""))
+  if (upsertError) throw upsertError
+  const { error: deleteError } = await db.from("room_items").delete().eq("room_id", v.id)
+  if (deleteError) throw deleteError
+  const { error: insertError } = await db
+    .from("room_items")
+    .insert(items.map((item, position) => ({ ...item, room_id: v.id, position })))
+  if (insertError) throw insertError
+  const { error: hashError } = await db.from("rooms").update({ description_hash: hashText(v.description) }).eq("id", v.id)
+  if (hashError) throw hashError
 }
 
 // Supabase は1回に1000件までしか返さないので、ページを分けて全件読む

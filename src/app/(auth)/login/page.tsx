@@ -15,7 +15,9 @@ function LoginForm() {
   );
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
-  const next = searchParams.get("next") ?? "/";
+  const rawNext = searchParams.get("next") ?? "/";
+  // このサイトの中のパスだけを許す（"//evil.com" や "https://…" には飛ばさない）
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
   const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {

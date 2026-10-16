@@ -57,6 +57,7 @@ function LoginForm() {
   return (
     <div className="max-w-sm w-full space-y-6">
       <div className="text-center">
+        <img src="/icon.svg" alt="" className="mx-auto mb-3 size-14" />
         <h1 className="text-2xl font-bold text-on-surface">Specify</h1>
         <p className="mt-1 text-sm text-on-surface-variant">
           {isSignUp ? "アカウントを作成" : "ログイン"}

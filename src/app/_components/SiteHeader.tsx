@@ -23,7 +23,8 @@ export async function SiteHeader({ current }: { current?: Current }) {
 
   return (
     <header className="hidden flex-wrap items-center justify-between gap-x-6 gap-y-1 md:flex">
-      <Link href="/" className="focus-ring rounded text-lg font-bold tracking-tight">
+      <Link href="/" className="focus-ring inline-flex items-center gap-2 rounded text-lg font-bold tracking-tight">
+        <img src="/icon.svg" alt="" className="size-7" />
         Specify
       </Link>
       <nav aria-label="メインメニュー">

@@ -2,7 +2,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { TAG_NAMES } from "@/lib/collector/parse"
 import { SiteHeader } from "./_components/SiteHeader"
-import { ROOM_CARD_SELECT, RoomCard } from "./_components/RoomCard"
+import { AddRoomCard, ROOM_CARD_SELECT, RoomCard } from "./_components/RoomCard"
 import { GenreCreate } from "./_components/GenreCreate"
 
 const PAGE_SIZE = 24
@@ -10,21 +10,6 @@ const PAGE_SIZE = 24
 type Props = { searchParams: Promise<{ tag?: string; genre?: string; page?: string }> }
 
 const UUID = /^[0-9a-f-]{36}$/i
-
-// 一覧のいちばん下と、部屋がないときに出す「見つけた動画を追加する」案内
-function AddRoomPrompt({ text = "探している部屋が見つかりませんか？ YouTube で見つけたルームツアーを追加できます。" }: { text?: string }) {
-  return (
-    <>
-      <p className="text-[0.9375rem] leading-[1.7] text-on-surface-variant">{text}</p>
-      <Link
-        href="/add"
-        className="focus-ring inline-flex min-h-11 items-center rounded-full bg-primary px-5 text-[0.9375rem] font-semibold text-on-primary hover:bg-primary-hover"
-      >
-        動画から部屋を追加する
-      </Link>
-    </>
-  )
-}
 
 // 眺めて見つける（docs/specify-design.md 2章）
 export default async function DiscoverPage({ searchParams }: Props) {
@@ -108,27 +93,32 @@ export default async function DiscoverPage({ searchParams }: Props) {
           </ul>
         </nav>
 
-        {rooms.length === 0 ? (
-          <div className="space-y-4 rounded-2xl bg-surface-container p-6">
+        {rooms.length === 0 && (
+          <div className="space-y-2">
             <p className="text-[1.0625rem] leading-[1.7]">
               {filterName ? `「${filterName}」の部屋はまだありません。` : "部屋を集めています。しばらくしてからもう一度ご覧ください。"}
             </p>
-            <AddRoomPrompt text={filterName ? `見つけた「${filterName}」の部屋の動画があれば、追加してみませんか？` : undefined} />
             {filterName && (
               <Link href="/" className="focus-ring inline-block rounded text-[0.9375rem] text-primary underline underline-offset-4">
                 すべての部屋を見る
               </Link>
             )}
           </div>
-        ) : (
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {rooms.map((room) => (
-              <li key={room.id}>
-                <RoomCard room={room} />
-              </li>
-            ))}
-          </ul>
         )}
+
+        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {rooms.map((room) => (
+            <li key={room.id}>
+              <RoomCard room={room} />
+            </li>
+          ))}
+          {/* 一覧の最後（続きがないとき）と、部屋がないときに「動画から部屋を追加」のカードを置く */}
+          {!hasMore && (
+            <li>
+              <AddRoomCard />
+            </li>
+          )}
+        </ul>
 
         {(page > 1 || hasMore) && (
           <nav aria-label="ページ" className="flex justify-between">
@@ -147,11 +137,6 @@ export default async function DiscoverPage({ searchParams }: Props) {
           </nav>
         )}
 
-        {rooms.length > 0 && !hasMore && (
-          <div className="space-y-3 rounded-2xl border border-dashed border-outline p-6 text-center">
-            <AddRoomPrompt />
-          </div>
-        )}
       </div>
     </main>
   )

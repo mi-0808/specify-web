@@ -10,7 +10,9 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(searchParams.get("signup") === "1");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "confirm" ? "確認リンクが無効か期限切れです。もう一度登録してください。" : null
+  );
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
   const next = searchParams.get("next") ?? "/";
@@ -23,7 +25,11 @@ function LoginForm() {
     setMessage(null);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${location.origin}/auth/confirm?next=${encodeURIComponent(next)}` },
+      });
       if (error) {
         setError(error.message);
       } else {

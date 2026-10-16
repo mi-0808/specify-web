@@ -5,7 +5,7 @@ import { toggleSave } from "./actions"
 import { Popover, SignupLinks } from "../../_components/Popover"
 
 const buttonClass =
-  "focus-ring inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[0.9375rem] transition-colors hover:bg-surface-container-high"
+  "focus-ring inline-flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-xl px-2 py-1 text-[0.6875rem] leading-none transition-colors hover:bg-surface-container-high"
 
 function BookmarkIcon({ filled }: { filled: boolean }) {
   return (
@@ -31,7 +31,7 @@ function Submit({ saved }: { saved: boolean }) {
   )
 }
 
-// ログイン中は押すと保存（アイコンが塗られる）。未ログインなら、会員登録へ案内する吹き出しを出す
+// アイコンの下に文字を置く（スマホで文字が縦に折れないように）。ログイン中は押すと保存（アイコンが塗られる）。未ログインなら、会員登録へ案内する吹き出しを出す
 export function SaveButton({ roomId, saved, loggedIn }: { roomId: string; saved: boolean; loggedIn: boolean }) {
   if (loggedIn) {
     return (

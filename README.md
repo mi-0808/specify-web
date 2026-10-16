@@ -1,10 +1,10 @@
 # Specify
 
-SNSで見た理想の部屋を、今買える家具の「レシピ」にする Web アプリ。
-雰囲気と予算から、ニトリ・IKEA・無印などで実際に買える商品の組み合わせ（商品・店・価格・総額）を出す。
+ネットで見たおしゃれな部屋から家具を特定して、自分に合う買い方（安い版・本物・中古など）を比べて選べる Web アプリ。
+今は段階1（ルームツアー動画を自動で集めて、部屋を眺めて見つける）まで。
 
-- 企画書（部屋のレシピ）: [docs/specify-recipe-plan.md](docs/specify-recipe-plan.md)
-- MVP 設計書: [docs/specify-recipe-mvp.md](docs/specify-recipe-mvp.md)
+- 企画書: [docs/specify-plan.md](docs/specify-plan.md)
+- 設計書（段階1）: [docs/specify-design.md](docs/specify-design.md)
 - デザイン規約: [docs/design-guidelines.md](docs/design-guidelines.md)
 
 ## 技術スタック
@@ -21,7 +21,7 @@ npm install
 cp .env.example .env.local
 ```
 
-`.env.local` に Supabase の URL と anon キーを設定する。
+`.env.local` に各値を設定する。意味は [.env.example](.env.example) のコメントを参照。
 
 ### データベース
 
@@ -31,7 +31,7 @@ cp .env.example .env.local
 supabase db push
 ```
 
-旧企画（写真を送って提案を受け取る機能）のテーブルも含まれている。今のアプリからは使っていない。
+旧企画（写真を送って提案を受け取る機能、部屋のレシピ）のテーブルも含まれている。今のアプリからは使っていない。
 
 ### 開発サーバー
 
@@ -43,15 +43,17 @@ npm run dev
 
 | パス | 役割 |
 |---|---|
-| `/` | トップ（入口） |
-| `/start` | 雰囲気を選ぶ |
-| `/start/[style]` | 予算を選ぶ |
-| `/recipes/[id]` | レシピ（保存・「買った」の記録） |
-| `/home` | マイページ（保存したレシピと次の一手） |
-| `/login` | ログイン・新規登録 |
+| `/` | 部屋を眺める（タグで絞り込み） |
+| `/rooms/[id]` | 部屋の詳細：動画と、紹介されている家具・購入先 |
+| `/api/cron/collect` | 部屋の自動収集（Vercel Cron が1日1回呼ぶ。`CRON_SECRET` が必要） |
+| `/login` | ログイン・新規登録（今は入口なし） |
 
-レシピを見るまでは会員登録なしで使える。保存・記録・マイページは会員登録が必要。
-レシピのデータは `src/data/recipes.ts` に書く。
+部屋は YouTube Data API でルームツアー動画を集め、説明欄の「使用アイテム」から作る（[docs/specify-design.md](docs/specify-design.md)）。
+手元で収集を動かすときは、開発サーバーを起動して次を実行する。
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/collect
+```
 
 ## 配色
 

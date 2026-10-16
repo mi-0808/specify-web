@@ -9,6 +9,62 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      rooms: {
+        Row: {
+          id: string;
+          title: string;
+          channel_id: string;
+          channel_title: string;
+          thumbnail_url: string;
+          published_at: string;
+          tags: string[];
+          description_hash: string;
+          refreshed_at: string;
+        };
+        Insert: {
+          id: string;
+          title: string;
+          channel_id: string;
+          channel_title: string;
+          thumbnail_url: string;
+          published_at: string;
+          tags?: string[];
+          description_hash: string;
+          refreshed_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["rooms"]["Insert"]>;
+        Relationships: [];
+      };
+      room_items: {
+        Row: {
+          room_id: string;
+          position: number;
+          label: string;
+          url: string;
+          shop_host: string;
+          product_title: string | null;
+          image_url: string | null;
+        };
+        Insert: {
+          room_id: string;
+          position: number;
+          label: string;
+          url: string;
+          shop_host: string;
+          product_title?: string | null;
+          image_url?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["room_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "room_items_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       saved_recipes: {
         Row: { user_id: string; recipe_id: string; created_at: string };
         Insert: { user_id: string; recipe_id: string; created_at?: string };

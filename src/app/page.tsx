@@ -4,6 +4,7 @@ import { TAG_NAMES } from "@/lib/collector/parse"
 import { SiteHeader } from "./_components/SiteHeader"
 import { AddRoomCard, ROOM_CARD_SELECT, RoomCard } from "./_components/RoomCard"
 import { GenreCreate } from "./_components/GenreCreate"
+import { FilterChips } from "./_components/FilterChips"
 import { LargeTitle } from "./_components/LargeTitle"
 
 const PAGE_SIZE = 24
@@ -57,12 +58,6 @@ export default async function DiscoverPage({ searchParams }: Props) {
     return s ? `/?${s}` : "/"
   }
   const current = genre ? { genre: genre.id } : tag ? { tag } : null
-  const chip = (active: boolean) =>
-    `focus-ring press inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-4 text-[0.9375rem] font-medium transition-colors ${
-      active
-        ? "bg-secondary-container text-on-secondary-container"
-        : "border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low"
-    }`
   const showSaved = savedRooms.length > 0 && !filterName && page === 1
 
   return (
@@ -91,7 +86,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
             <ul className="-mx-5 flex snap-x gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
               {savedRooms.map((r) => (
                 <li key={r.id} className="w-40 shrink-0 snap-start">
-                  <Link href={`/rooms/${r.id}`} className="focus-ring press block rounded-2xl">
+                  <Link href={`/rooms/${r.id}`} className="focus-ring block rounded-2xl">
                     {/* eslint-disable-next-line @next/next/no-img-element -- YouTube のサムネイルをそのまま表示する */}
                     <img src={r.thumbnail_url} alt="" loading="lazy" className="aspect-video w-full rounded-2xl object-cover soft-card" />
                     <p className="mt-2 line-clamp-2 text-[0.8125rem] leading-[1.5]">{r.title}</p>
@@ -104,24 +99,12 @@ export default async function DiscoverPage({ searchParams }: Props) {
 
         <nav aria-label="ジャンルで絞り込む">
           <ul className="flex flex-wrap gap-2">
-            {TAG_NAMES.map((t) => (
-              <li key={t}>
-                <Link href={href(t === tag ? null : { tag: t })} aria-current={t === tag ? "page" : undefined} className={chip(t === tag)}>
-                  {t}
-                </Link>
-              </li>
-            ))}
-            {genreChips.map((g) => (
-              <li key={g.id}>
-                <Link
-                  href={href(g.id === genre?.id ? null : { genre: g.id })}
-                  aria-current={g.id === genre?.id ? "page" : undefined}
-                  className={chip(g.id === genre?.id)}
-                >
-                  {g.name}
-                </Link>
-              </li>
-            ))}
+            <FilterChips
+              chips={[
+                ...TAG_NAMES.map((t) => ({ key: `tag:${t}`, label: t, href: href(t === tag ? null : { tag: t }), active: t === tag })),
+                ...genreChips.map((g) => ({ key: g.id, label: g.name, href: href(g.id === genre?.id ? null : { genre: g.id }), active: g.id === genre?.id })),
+              ]}
+            />
             <li>
               <GenreCreate loggedIn={!!user} />
             </li>

@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 
 type Current = "discover" | "saved" | "me"
 
-const link = "focus-ring inline-flex min-h-11 items-center rounded px-2 text-[0.9375rem] transition-colors hover:text-on-surface"
+const link = "focus-ring inline-flex min-h-11 items-center rounded px-2 text-[0.9375rem] hover:text-on-surface"
 
 // パソコンだけ、右上にリンクを横一列で並べる（スマホは下のタブバー）。ログアウトはマイページの中
 export async function SiteHeader({ current }: { current?: Current }) {

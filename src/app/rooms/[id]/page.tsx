@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { shopName } from "@/lib/collector/shops"
 import { SiteHeader } from "../../_components/SiteHeader"
 import { SaveButton } from "./SaveButton"
+import { BackButton } from "./BackButton"
 import { removeFromGenre } from "../../genres/actions"
 import Link from "next/link"
 
@@ -50,8 +51,11 @@ export default async function RoomPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-8 pt-4 md:pt-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 pb-8 pt-8">
         <SiteHeader />
+        <div className="-mb-4">
+          <BackButton />
+        </div>
 
         <section className="space-y-3">
           <div className="overflow-hidden rounded-2xl bg-surface-container">

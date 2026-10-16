@@ -5,7 +5,7 @@ import { toggleSave } from "./actions"
 import { Popover, SignupLinks } from "../../_components/Popover"
 
 const buttonClass =
-  "focus-ring inline-flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-xl px-2 py-1 text-[0.6875rem] leading-none transition-colors hover:bg-surface-container-high"
+  "focus-ring inline-flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-xl px-2 py-1 text-[0.6875rem] leading-none hover:bg-surface-container-high"
 
 function BookmarkIcon({ filled }: { filled: boolean }) {
   return (

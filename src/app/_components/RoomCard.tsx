@@ -12,7 +12,7 @@ export function RoomCard({ room }: { room: RoomCardData }) {
   return (
     <Link
       href={`/rooms/${room.id}`}
-      className="focus-ring press soft-card group block overflow-hidden rounded-[20px] bg-surface-container-lowest transition-colors hover:bg-surface-container-low"
+      className="focus-ring soft-card group block overflow-hidden rounded-[20px] bg-surface-container-lowest hover:bg-surface-container-low"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- YouTube のサムネイルをそのまま表示する */}
       <img src={room.thumbnail_url} alt="" loading="lazy" className="aspect-video w-full object-cover" />
@@ -31,10 +31,10 @@ export function AddRoomCard() {
   return (
     <Link
       href="/add"
-      className="focus-ring press soft-card group block overflow-hidden rounded-[20px] bg-surface-container transition-colors hover:bg-surface-container-high"
+      className="focus-ring soft-card group block overflow-hidden rounded-[20px] bg-surface-container hover:bg-surface-container-high"
     >
       <div className="flex aspect-video w-full items-center justify-center bg-surface-container-high">
-        <span className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-on-primary transition-colors group-hover:bg-primary-hover">
+        <span className="inline-flex size-14 items-center justify-center rounded-full bg-primary text-on-primary group-hover:bg-primary-hover">
           {/* 角の丸い再生ボタン（動画を貼って探索する）。ロゴではなく一般的な形 */}
           <svg viewBox="0 0 24 24" aria-hidden="true" className="size-7">
             <rect x="2.5" y="5.5" width="19" height="13" rx="4" fill="currentColor" />

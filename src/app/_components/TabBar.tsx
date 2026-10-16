@@ -34,7 +34,7 @@ export function TabBar() {
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
-                className={`focus-ring flex touch-manipulation select-none min-h-14 min-w-16 flex-col items-center justify-center gap-0.5 rounded-xl px-3 pt-1.5 text-[0.6875rem] font-medium ${
+                className={`focus-ring flex min-h-14 min-w-16 flex-col items-center justify-center gap-0.5 rounded-xl px-3 pt-1.5 text-[0.6875rem] font-medium ${
                   active ? "tab-lit text-primary" : "text-on-surface-variant"
                 }`}
               >

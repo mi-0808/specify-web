@@ -100,6 +100,17 @@ body {
   color: var(--on-surface);
 }
 
+/* 押したらすぐ反応：縮む・弾む動きは付けず、押している間だけ薄くする。ダブルタップ拡大の待ちもなくす */
+a,
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+a:active,
+button:not(:disabled):active {
+  opacity: 0.7;
+}
+
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--primary);
@@ -107,29 +118,11 @@ body {
   }
 }
 
-/* Apple らしさ（docs/design-guidelines.md）：やわらかい影、押したときの縮み・弾み。動きは「視差効果を減らす」の人には付けない */
+/* Apple らしさ（docs/design-guidelines.md）：やわらかい影 */
 @utility soft-card {
   box-shadow: 0 1px 2px rgb(47 40 35 / 0.06), 0 6px 20px rgb(47 40 35 / 0.06);
   @media (prefers-color-scheme: dark) {
     box-shadow: 0 0 0 1px var(--outline-variant);
-  }
-}
-
-@utility press {
-  @media (prefers-reduced-motion: no-preference) {
-    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    &:active {
-      transform: scale(0.97);
-    }
-  }
-}
-
-@utility press-bounce {
-  @media (prefers-reduced-motion: no-preference) {
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    &:active {
-      transform: scale(0.86);
-    }
   }
 }
 

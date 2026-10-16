@@ -31,9 +31,10 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith("/login");
-  // 部屋を眺めるのはログイン不要。収集処理は CRON_SECRET で守る
+  // 部屋を眺めるのはログイン不要。収集処理は CRON_SECRET で守る。確認メールのリンクは未ログインで開かれる
   const isPublicRoute =
-    pathname === "/" || isAuthRoute || pathname.startsWith("/rooms/") || pathname.startsWith("/api/cron/");
+    pathname === "/" || isAuthRoute || pathname.startsWith("/rooms/") || pathname.startsWith("/api/cron/") ||
+    pathname === "/auth/confirm";
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

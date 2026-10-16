@@ -37,20 +37,6 @@ export async function createGenre(_prev: GenreState, formData: FormData): Promis
   redirect(`/?genre=${data.id}`)
 }
 
-export async function addToGenre(formData: FormData) {
-  const roomId = String(formData.get("roomId") ?? "")
-  const genreId = String(formData.get("genreId") ?? "")
-  if (!ROOM.test(roomId) || !UUID.test(genreId)) return
-  const { supabase, userId } = await signedIn(`/rooms/${roomId}`)
-
-  // ジャンルを作った本人なら、前に外した部屋をもう一度入れられる（外した記録を消してから足す）
-  await supabase.from("room_genres").delete().match({ room_id: roomId, genre_id: genreId, excluded: true })
-  const { error } = await supabase.from("room_genres").insert({ room_id: roomId, genre_id: genreId, added_by: userId })
-  if (error && error.code !== "23505") throw new Error("ジャンルに入れられませんでした。")
-  revalidatePath(`/rooms/${roomId}`)
-  revalidatePath("/")
-}
-
 // 自分が足した部屋を外す。ジャンルを作った本人は、言葉で自動で入った部屋も外せる
 export async function removeFromGenre(formData: FormData) {
   const roomId = String(formData.get("roomId") ?? "")

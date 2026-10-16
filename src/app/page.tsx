@@ -69,7 +69,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
     <main className="min-h-screen bg-surface text-on-surface">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-8 pt-4 md:pt-8">
         <SiteHeader current="discover" />
-        <LargeTitle title="さがす" subtitle="ルームツアーの家具と、その買える場所" />
+        <LargeTitle brand title="さがす" subtitle="ルームツアーの家具と、その買える場所" />
         {/* パソコンは今の見出しのまま */}
         <section className="hidden space-y-3 md:block">
           <h1 className="text-[1.75rem] font-bold leading-[1.4]">見つけた部屋の家具を、そのまま探せる。</h1>

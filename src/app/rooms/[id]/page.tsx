@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server"
 import { shopName } from "@/lib/collector/shops"
 import { SiteHeader } from "../../_components/SiteHeader"
 import { SaveButton } from "./SaveButton"
-import { GenreAdd } from "./GenreAdd"
 import { removeFromGenre } from "../../genres/actions"
 import Link from "next/link"
 
@@ -38,16 +37,13 @@ export default async function RoomPage({ params }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const [{ data: saved }, { data: genres }, { data: allGenres }, { data: myAdds }] = await Promise.all([
+  const [{ data: saved }, { data: genres }, { data: myAdds }] = await Promise.all([
     user ? supabase.from("saved_rooms").select("room_id").eq("room_id", room.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.rpc("genres_for_room", { rid: room.id }).select("id, name, created_by"),
-    // ponytail: 選べるジャンルは名前順に200個まで。増えたら検索して選ぶ形にする
-    supabase.from("genres").select("id, name").order("name").limit(200),
     user
       ? supabase.from("room_genres").select("genre_id").eq("room_id", room.id).eq("added_by", user.id).eq("excluded", false)
       : Promise.resolve({ data: [] as { genre_id: string }[] }),
   ])
-  const inRoom = new Set((genres ?? []).map((g) => g.id))
   const mine = new Set((myAdds ?? []).map((a) => a.genre_id))
   // 外せるのは、ジャンルを作った本人か、自分で足した人だけ
   const removable = (g: { id: string; created_by: string }) => !!user && (g.created_by === user.id || mine.has(g.id))
@@ -68,65 +64,56 @@ export default async function RoomPage({ params }: Props) {
               className="aspect-video w-full"
             />
           </div>
-          <h1 className="text-[1.375rem] font-bold leading-[1.4]">{room.title}</h1>
-          <div className="flex items-start justify-between gap-4">
-            <p className="flex flex-wrap gap-x-4 gap-y-1 pt-2.5 text-[0.9375rem]">
+          <div>
+            <h1 className="text-[1.375rem] font-bold leading-[1.4]">{room.title}</h1>
+            <div className="flex items-center justify-between gap-4">
               <a
                 href={`https://www.youtube.com/channel/${room.channel_id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="focus-ring rounded text-on-surface-variant underline underline-offset-4"
+                className="focus-ring min-w-0 truncate rounded text-[0.9375rem] text-on-surface-variant underline underline-offset-4"
               >
                 {room.channel_title}
               </a>
-              <a
-                href={`https://www.youtube.com/watch?v=${room.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="focus-ring rounded text-primary underline underline-offset-4"
-              >
-                YouTube で見る ↗
-              </a>
-            </p>
-            <SaveButton roomId={room.id} saved={!!saved} loggedIn={!!user} />
+              <SaveButton roomId={room.id} saved={!!saved} loggedIn={!!user} />
+            </div>
           </div>
         </section>
 
-        <section className="space-y-3" aria-labelledby="genres-title">
-          <h2 id="genres-title" className="text-[1.0625rem] font-semibold">ジャンル</h2>
-          <ul className="flex flex-wrap items-center gap-2">
-            {room.tags.map((t) => (
-              <li key={t}>
-                <Link href={`/?tag=${encodeURIComponent(t)}`} className={chipClass}>
-                  {t}
-                </Link>
-              </li>
-            ))}
-            {(genres ?? []).map((g) => (
-              <li key={g.id} className="flex items-center">
-                <Link href={`/?genre=${g.id}`} className={`${chipClass} ${removable(g) ? "rounded-r-none pr-2" : ""}`}>
-                  {g.name}
-                </Link>
-                {removable(g) && (
-                  <form action={removeFromGenre}>
-                    <input type="hidden" name="roomId" value={room.id} />
-                    <input type="hidden" name="genreId" value={g.id} />
-                    <button
-                      type="submit"
-                      aria-label={`「${g.name}」から外す`}
-                      className="focus-ring inline-flex min-h-11 items-center rounded-r-full border border-l-0 border-outline px-3 text-on-surface-variant hover:bg-surface-container-high"
-                    >
-                      ×
-                    </button>
-                  </form>
-                )}
-              </li>
-            ))}
-            <li>
-              <GenreAdd roomId={room.id} loggedIn={!!user} options={(allGenres ?? []).filter((g) => !inRoom.has(g.id))} />
-            </li>
-          </ul>
-        </section>
+        {(room.tags.length > 0 || (genres ?? []).length > 0) && (
+          <section className="space-y-3" aria-labelledby="genres-title">
+            <h2 id="genres-title" className="text-[1.0625rem] font-semibold">ジャンル</h2>
+            <ul className="flex flex-wrap items-center gap-2">
+              {room.tags.map((t) => (
+                <li key={t}>
+                  <Link href={`/?tag=${encodeURIComponent(t)}`} className={chipClass}>
+                    {t}
+                  </Link>
+                </li>
+              ))}
+              {(genres ?? []).map((g) => (
+                <li key={g.id} className="flex items-center">
+                  <Link href={`/?genre=${g.id}`} className={`${chipClass} ${removable(g) ? "rounded-r-none pr-2" : ""}`}>
+                    {g.name}
+                  </Link>
+                  {removable(g) && (
+                    <form action={removeFromGenre}>
+                      <input type="hidden" name="roomId" value={room.id} />
+                      <input type="hidden" name="genreId" value={g.id} />
+                      <button
+                        type="submit"
+                        aria-label={`「${g.name}」から外す`}
+                        className="focus-ring inline-flex min-h-11 items-center rounded-r-full border border-l-0 border-outline px-3 text-on-surface-variant hover:bg-surface-container-high"
+                      >
+                        ×
+                      </button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="space-y-4">
           <div className="space-y-1">

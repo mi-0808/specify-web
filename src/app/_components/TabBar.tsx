@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState } from "react"
 
 const ICONS = {
   search: <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Zm5.3-2.2L21 21" />,
@@ -24,16 +25,21 @@ const TABS = [
 // スマホだけ、画面の下にすりガラスのタブバーを出す（パソコンは上のヘッダーのまま）
 export function TabBar() {
   const pathname = usePathname()
+  // 押したタブを覚えておき、ページの読み込みを待たずに選択表示を移す（URL が変わったら usePathname に戻る）
+  const [tapped, setTapped] = useState<{ href: string; from: string } | null>(null)
+  const pending = tapped?.from === pathname ? tapped.href : null
   return (
     <nav aria-label="メインメニュー" className="glass fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant/60 pb-[env(safe-area-inset-bottom)] md:hidden">
       <ul className="mx-auto flex max-w-md justify-around">
         {TABS.map((t) => {
-          const active = t.match(pathname)
+          const current = t.match(pathname)
+          const active = pending ? t.href === pending : current
           return (
             <li key={t.href}>
               <Link
                 href={t.href}
-                aria-current={active ? "page" : undefined}
+                aria-current={current ? "page" : undefined}
+                onClick={() => setTapped({ href: t.href, from: pathname })}
                 className={`focus-ring flex touch-manipulation select-none min-h-14 min-w-16 flex-col items-center justify-center gap-0.5 rounded-xl px-3 pt-1.5 text-[0.6875rem] font-medium ${
                   active ? "tab-lit text-primary" : "text-on-surface-variant"
                 }`}

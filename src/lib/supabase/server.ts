@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { Database } from "@/types/database";
 
 export async function createClient() {
@@ -26,3 +27,6 @@ export async function createClient() {
     }
   );
 }
+
+// 1回の表示の中で、ページとヘッダーが別々に Supabase へ聞きに行かないよう使い回す
+export const getUser = cache(async () => (await createClient()).auth.getUser());

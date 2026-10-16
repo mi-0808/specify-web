@@ -1,6 +1,6 @@
 import Link from "next/link"
 import type { Metadata } from "next"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUser } from "@/lib/supabase/server"
 import { SiteHeader } from "../_components/SiteHeader"
 import { LargeTitle } from "../_components/LargeTitle"
 import { signOut } from "../_components/actions"
@@ -13,7 +13,7 @@ const row = "flex items-center gap-3 border-b border-outline-variant/70 px-4 py-
 // マイページ（スマホは下のタブ、パソコンは右上の「マイページ」から）。未ログインでも開けて、会員登録へ案内する
 export default async function MyPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
 
   const { data: explored } = user
     ? await supabase

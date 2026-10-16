@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getUser } from "@/lib/supabase/server"
 import { TAG_NAMES } from "@/lib/collector/parse"
 import { SiteHeader } from "./_components/SiteHeader"
 import { AddRoomCard, ROOM_CARD_SELECT, RoomCard } from "./_components/RoomCard"
@@ -21,7 +21,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
   const from = (page - 1) * PAGE_SIZE
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await getUser()
   const [{ data: genres, error: genresError }, { data: savedRows }] = await Promise.all([
     // ponytail: ユーザーのジャンルは部屋の多い順に20個まで。増えたら「もっと見る」かジャンル一覧ページを作る
     supabase.rpc("genres_with_counts").gt("room_count", 0).order("room_count", { ascending: false }).limit(20),

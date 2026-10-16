@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Suspense } from "react";
 import { TabBar } from "./_components/TabBar";
+import { NavProgress } from "./_components/NavProgress";
 
 export const metadata: Metadata = {
   title: "Specify – 見つけた部屋の家具を、自分に合う買い方で",
@@ -25,6 +27,9 @@ export default function RootLayout({
     <html lang="ja" className="h-full antialiased">
       {/* スマホは下のタブバーの分だけ下を空ける */}
       <body className="min-h-full flex flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         {children}
         <TabBar />
       </body>

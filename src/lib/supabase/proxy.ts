@@ -34,7 +34,7 @@ export async function updateSession(request: NextRequest) {
   // 部屋を眺めるのとマイページ（未ログインなら会員登録の案内）はログイン不要。収集処理は CRON_SECRET で守る。確認メールのリンクと規約ページは未ログインで開かれる
   const isPublicRoute =
     pathname === "/" || pathname === "/me" || isAuthRoute || pathname.startsWith("/rooms/") || pathname.startsWith("/api/cron/") ||
-    pathname === "/auth/confirm" || pathname === "/privacy" || pathname === "/terms";
+    pathname === "/auth/confirm" || pathname.startsWith("/auth/google") || pathname === "/privacy" || pathname === "/terms";
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();

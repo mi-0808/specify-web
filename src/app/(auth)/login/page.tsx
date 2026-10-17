@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -30,7 +30,9 @@ async function sha256Hex(text: string) {
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const wrapRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     searchParams.get("error") === "confirm" ? "ログインできませんでした。もう一度お試しください。" : null
@@ -42,8 +44,7 @@ function LoginForm() {
   // Google のボタンをこのサイトの中で出す。Supabase 経由のリダイレクトだと、Google の画面に supabase.co のドメインが出てしまうため
   async function setupGoogleButton() {
     const google = window.google;
-    const parent = buttonRef.current;
-    if (!google || !parent) return;
+    if (!google) return;
     // 同じ ID トークンを使い回されないように、ランダムな値を Google（ハッシュ）と Supabase（そのまま）に渡す
     const nonce = crypto.randomUUID();
     google.accounts.id.initialize({
@@ -63,15 +64,31 @@ function LoginForm() {
         router.refresh();
       },
     });
-    google.accounts.id.renderButton(parent, {
-      theme: "filled_black",
-      shape: "pill",
-      size: "large",
-      text: "continue_with",
-      locale: "ja",
-      width: Math.min(parent.offsetWidth, 400),
-    });
+    setReady(true);
   }
+
+  // 公式ボタンは幅を px で決めて描くので、枠の幅が変わるたびに描き直す（そのままだと画面を狭めたときにはみ出す）
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const parent = buttonRef.current;
+    if (!ready || !wrap || !parent) return;
+    const render = () => {
+      parent.replaceChildren();
+      window.google?.accounts.id.renderButton(parent, {
+        theme: "filled_black",
+        shape: "rectangular",
+        logo_alignment: "center",
+        size: "large",
+        text: "continue_with",
+        locale: "ja",
+        // 1.15 倍に拡大して出すので、そのぶん細く描く。公式ボタンの幅は 400px まで
+        width: Math.round(Math.min(wrap.offsetWidth / 1.15, 400)),
+      });
+    };
+    const observer = new ResizeObserver(render);
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, [ready]);
 
   return (
     <div className="max-w-sm w-full space-y-6">
@@ -82,8 +99,10 @@ function LoginForm() {
         <p className="mt-1 text-sm text-on-surface-variant">ログイン / 新規登録</p>
       </div>
 
-      {/* Google のボタンが入る。読み込み前とログイン中は高さだけ確保しておく */}
-      <div ref={buttonRef} aria-busy={loading} className={`flex h-11 justify-center ${loading ? "pointer-events-none opacity-50" : ""}`} />
+      {/* Google のボタンが入る。公式ボタンは高さ 40px 固定なので、1.15 倍に拡大して他の 46px のボタンにそろえる */}
+      <div ref={wrapRef} className="flex h-[46px] items-center justify-center">
+        <div ref={buttonRef} aria-busy={loading} className={`scale-[1.15] ${loading ? "pointer-events-none opacity-50" : ""}`} />
+      </div>
 
       {error && <p role="alert" className="text-sm text-error text-center">{error}</p>}
 

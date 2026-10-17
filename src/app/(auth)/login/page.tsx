@@ -1,108 +1,40 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
-import Script from "next/script";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
-
-// Google Identity Services（https://accounts.google.com/gsi/client）のうち、使う分だけの型
-type GoogleId = {
-  initialize(options: {
-    client_id: string;
-    callback: (res: { credential: string }) => void;
-    nonce: string;
-    use_fedcm_for_button?: boolean;
-  }): void;
-  renderButton(parent: HTMLElement, options: Record<string, string | number>): void;
-};
-declare global {
-  interface Window {
-    google?: { accounts: { id: GoogleId } };
-  }
-}
-
-async function sha256Hex(text: string) {
-  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("");
-}
+import { useSearchParams } from "next/navigation";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    searchParams.get("error") === "confirm" ? "ログインできませんでした。もう一度お試しください。" : null
-  );
+  const error = searchParams.get("error") === "confirm" ? "ログインできませんでした。もう一度お試しください。" : null;
   const rawNext = searchParams.get("next") ?? "/";
   // このサイトの中のパスだけを許す（"//evil.com" や "https://…" には飛ばさない）
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
-  // Google のボタンをこのサイトの中で出す。Supabase 経由のリダイレクトだと、Google の画面に supabase.co のドメインが出てしまうため
-  async function setupGoogleButton() {
-    const google = window.google;
-    if (!google) return;
-    // 同じ ID トークンを使い回されないように、ランダムな値を Google（ハッシュ）と Supabase（そのまま）に渡す
-    const nonce = crypto.randomUUID();
-    google.accounts.id.initialize({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      nonce: await sha256Hex(nonce),
-      use_fedcm_for_button: true,
-      callback: async ({ credential }) => {
-        setLoading(true);
-        setError(null);
-        const { error } = await createClient().auth.signInWithIdToken({ provider: "google", token: credential, nonce });
-        if (error) {
-          setError(error.message);
-          setLoading(false);
-          return;
-        }
-        router.push(next);
-        router.refresh();
-      },
-    });
-    setReady(true);
-  }
-
-  // 公式ボタンは幅を px で決めて描くので、枠の幅が変わるたびに描き直す（そのままだと画面を狭めたときにはみ出す）
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    const parent = buttonRef.current;
-    if (!ready || !wrap || !parent) return;
-    const render = () => {
-      parent.replaceChildren();
-      window.google?.accounts.id.renderButton(parent, {
-        theme: "filled_black",
-        shape: "rectangular",
-        logo_alignment: "center",
-        size: "large",
-        text: "continue_with",
-        locale: "ja",
-        // 1.15 倍に拡大して出すので、そのぶん細く描く。公式ボタンの幅は 400px まで
-        width: Math.round(Math.min(wrap.offsetWidth / 1.15, 400)),
-      });
-    };
-    const observer = new ResizeObserver(render);
-    observer.observe(wrap);
-    return () => observer.disconnect();
-  }, [ready]);
-
   return (
     <div className="max-w-sm w-full space-y-6">
-      <Script src="https://accounts.google.com/gsi/client" onReady={() => void setupGoogleButton()} />
       <div className="text-center">
         <img src="/icon.svg" alt="" className="mx-auto mb-3 size-14" />
         <h1 className="text-2xl font-bold text-on-surface">Specify</h1>
         <p className="mt-1 text-sm text-on-surface-variant">ログイン / 新規登録</p>
       </div>
 
-      {/* Google のボタンが入る。公式ボタンは高さ 40px 固定なので、1.15 倍に拡大して他の 46px のボタンにそろえる */}
-      <div ref={wrapRef} className="flex h-[46px] items-center justify-center">
-        <div ref={buttonRef} aria-busy={loading} className={`scale-[1.15] ${loading ? "pointer-events-none opacity-50" : ""}`} />
-      </div>
+      {/* /auth/google から Google に移る。Supabase を通さないので、Google の画面にこのサイトのドメインが出る */}
+      <a
+        href={`/auth/google?next=${encodeURIComponent(next)}`}
+        onClick={() => setLoading(true)}
+        aria-busy={loading}
+        className={`w-full py-2.5 flex items-center justify-center gap-2.5 border border-outline rounded-lg bg-surface-container-lowest text-on-surface font-medium hover:bg-surface-container-low ${loading ? "pointer-events-none opacity-50" : ""}`}
+      >
+        <svg aria-hidden="true" viewBox="0 0 48 48" className="size-5">
+          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+          <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+          <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+        </svg>
+        {loading ? "処理中..." : "Googleで続ける"}
+      </a>
 
       {error && <p role="alert" className="text-sm text-error text-center">{error}</p>}
 

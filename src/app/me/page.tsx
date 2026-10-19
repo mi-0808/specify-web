@@ -4,6 +4,7 @@ import { createClient, getUser } from "@/lib/supabase/server"
 import { SiteHeader } from "../_components/SiteHeader"
 import { LargeTitle } from "../_components/LargeTitle"
 import { signOut } from "../_components/actions"
+import { GenreDelete } from "../_components/GenreDelete"
 
 export const metadata: Metadata = { title: "マイページ | Specify" }
 
@@ -23,6 +24,14 @@ export default async function MyPage() {
         .limit(50)
     : { data: [] }
   const rooms = (explored ?? []).flatMap((e) => (e.rooms ? [e.rooms] : []))
+
+  const { data: genres } = user
+    ? await supabase.from("genres").select("id, name, keyword").eq("created_by", user.id).order("created_at", { ascending: false })
+    : { data: [] }
+  const { data: counts } = genres?.length
+    ? await supabase.rpc("genres_with_counts").in("id", genres.map((g) => g.id))
+    : { data: [] }
+  const roomCount = new Map((counts ?? []).map((c) => [c.id, c.room_count]))
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
@@ -53,6 +62,30 @@ export default async function MyPage() {
                 <span className="shrink-0 text-[0.8125rem] text-on-surface-variant">ログイン中</span>
               </div>
             </div>
+
+            {!!genres?.length && (
+              <section aria-labelledby="genres-title" className="space-y-2">
+                <h2 id="genres-title" className="px-1 text-[0.8125rem] text-on-surface-variant">
+                  自分が作ったジャンル
+                </h2>
+                <ul className={group}>
+                  {genres.map((g) => (
+                    <li key={g.id} className="flex items-center border-b border-outline-variant/70 pr-1 last:border-b-0">
+                      <Link href={`/?genre=${g.id}`} className="focus-ring flex min-w-0 flex-1 items-center gap-2 px-4 py-3 hover:bg-surface-container-low">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[0.9375rem]">{g.name}</span>
+                          <span className="block truncate text-[0.8125rem] text-on-surface-variant">
+                            {roomCount.get(g.id) ?? 0}部屋 ・ 集める言葉「{g.keyword}」
+                          </span>
+                        </span>
+                        <span aria-hidden="true" className="text-on-surface-variant">›</span>
+                      </Link>
+                      <GenreDelete id={g.id} name={g.name} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section aria-labelledby="explored-title" className="space-y-2">
               <h2 id="explored-title" className="px-1 text-[0.8125rem] text-on-surface-variant">

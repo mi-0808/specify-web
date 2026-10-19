@@ -56,3 +56,14 @@ export async function removeFromGenre(formData: FormData) {
   revalidatePath(`/rooms/${roomId}`)
   revalidatePath("/")
 }
+
+// 作った本人だけが消せる（RLS でも守っている）。room_genres は外部キーで一緒に消える
+export async function deleteGenre(formData: FormData) {
+  const genreId = String(formData.get("genreId") ?? "")
+  if (!UUID.test(genreId)) return
+  const { supabase, userId } = await signedIn("/me")
+  const { error } = await supabase.from("genres").delete().match({ id: genreId, created_by: userId })
+  if (error) throw new Error("ジャンルを消せませんでした。")
+  revalidatePath("/me")
+  revalidatePath("/")
+}

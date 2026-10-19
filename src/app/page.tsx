@@ -39,7 +39,10 @@ export default async function DiscoverPage({ searchParams }: Props) {
       (await supabase.from("genres").select("id, name").eq("id", genreId).maybeSingle()).data)
     : null
 
-  const base = genre ? supabase.rpc("rooms_in_genre", { gid: genre.id }).select(ROOM_CARD_SELECT) : supabase.from("rooms").select(ROOM_CARD_SELECT)
+  // RPC の結果は select に入れた列でしか並べ替えられないので、published_at も取る
+  const base = genre
+    ? supabase.rpc("rooms_in_genre", { gid: genre.id }).select(`${ROOM_CARD_SELECT}, published_at`)
+    : supabase.from("rooms").select(ROOM_CARD_SELECT)
   let query = base.order("published_at", { ascending: false }).range(from, from + PAGE_SIZE) // 1件多く取って、続きがあるか判定する
   if (tag && !genre) query = query.contains("tags", [tag])
   const { data, error } = await query

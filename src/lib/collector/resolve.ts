@@ -79,8 +79,17 @@ function ogContent(html: string, property: string): string | null {
   return null
 }
 
+// 商品名によく出る名前付きの記号だけ持つ（数字の形 &#215; &#xD7; はすべて戻す）。知らない名前はそのまま残す
+const NAMED: Record<string, string> = {
+  amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " ", times: "×", divide: "÷",
+  yen: "¥", hellip: "…", middot: "・", deg: "°", plusmn: "±", copy: "©", reg: "®", trade: "™",
+}
 const decodeEntities = (s: string) =>
-  s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+  s.replace(/&(?:#(\d+)|#x([\da-f]+)|(\w+));/gi, (m, dec, hex, name) => {
+    if (name) return NAMED[name.toLowerCase()] ?? m
+    const code = parseInt(dec ?? hex, dec ? 10 : 16)
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m
+  })
 
 // 楽天の「【ポイント5倍…】＼激安！／[セール…] 商品名：ショップ名」から、先頭の宣伝とショップ名を外す
 const cleanTitle = (t: string | null) =>

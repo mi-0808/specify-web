@@ -30,6 +30,18 @@ describe("resolveProduct", () => {
     })
   })
 
+  it("商品名の記号（&times; &#215; &amp;lt; など）を文字に戻す", async () => {
+    const fetch = fakeFetch({
+      "https://item.rakuten.co.jp/shop/mirror/": {
+        status: 200,
+        html: '<meta property="og:title" content="ミラー 幅12.5&times;奥行3&#215;高さ120cm &amp;lt;木製&amp;gt; &#x2605;">',
+      },
+    })
+    expect((await resolveProduct("https://item.rakuten.co.jp/shop/mirror/", fetch))?.title).toBe(
+      "ミラー 幅12.5×奥行3×高さ120cm &lt;木製&gt; ★",
+    )
+  })
+
   it("許可リストの外の URL には取りに行かない", async () => {
     const fetch = fakeFetch({})
     expect(await resolveProduct("https://www.instagram.com/someone", fetch)).toBeNull()

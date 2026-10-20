@@ -45,7 +45,7 @@ npm run dev
 |---|---|
 | `/` | 部屋を眺める（タグで絞り込み） |
 | `/rooms/[id]` | 部屋の詳細：動画と、紹介されている家具・購入先 |
-| `/api/cron/collect` | 部屋の自動収集（Vercel Cron が1日1回呼ぶ。`CRON_SECRET` が必要） |
+| `/api/cron/collect` | 保存済みの部屋の取り直し（Vercel Cron が1日1回呼ぶ。`CRON_SECRET` が必要） |
 | `/login` | ログイン・新規登録（今は入口なし） |
 
 部屋は YouTube Data API でルームツアー動画を集め、説明欄の「使用アイテム」から作る（[docs/specify-design.md](docs/specify-design.md)）。

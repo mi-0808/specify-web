@@ -29,10 +29,11 @@ export function RoomCard({ room }: { room: RoomCardData }) {
 }
 
 // 一覧の最後に置く「気になる動画の部屋を探索」。部屋のカードと同じ形にして、一覧の流れに溶け込ませる
-export function AddRoomCard() {
+// ジャンルで絞り込んでいるときは、そのジャンルに入れる /add を開く
+export function AddRoomCard({ genreId }: { genreId?: string }) {
   return (
     <Link
-      href="/add"
+      href={genreId ? `/add?genre=${genreId}` : "/add"}
       className="focus-ring soft-card group relative block overflow-hidden rounded-[20px] bg-surface-container hover:bg-surface-container-high"
     >
       <div className="flex aspect-video w-full items-center justify-center bg-surface-container-high">

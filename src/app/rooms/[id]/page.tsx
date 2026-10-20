@@ -4,7 +4,7 @@ import { shopName } from "@/lib/collector/shops"
 import { SiteHeader } from "../../_components/SiteHeader"
 import { SaveButton } from "./SaveButton"
 import { BackButton } from "./BackButton"
-import { removeFromGenre } from "../../genres/actions"
+import { RoomDelete } from "./RoomDelete"
 import Link from "next/link"
 
 type Props = { params: Promise<{ id: string }> }
@@ -18,7 +18,7 @@ async function loadRoom(id: string) {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("rooms")
-    .select("id, title, channel_id, channel_title, tags, room_items(position, label, url, shop_host, product_title, image_url)")
+    .select("id, title, channel_id, channel_title, genres(id, name, created_by), room_items(position, label, url, shop_host, product_title, image_url)")
     .eq("id", id)
     .order("position", { referencedTable: "room_items" })
     .maybeSingle()
@@ -38,16 +38,12 @@ export default async function RoomPage({ params }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await getUser()
-  const [{ data: saved }, { data: genres }, { data: myAdds }] = await Promise.all([
-    user ? supabase.from("saved_rooms").select("room_id").eq("room_id", room.id).maybeSingle() : Promise.resolve({ data: null }),
-    supabase.rpc("genres_for_room", { rid: room.id }).select("id, name, created_by"),
-    user
-      ? supabase.from("room_genres").select("genre_id").eq("room_id", room.id).eq("added_by", user.id).eq("excluded", false)
-      : Promise.resolve({ data: [] as { genre_id: string }[] }),
-  ])
-  const mine = new Set((myAdds ?? []).map((a) => a.genre_id))
-  // 外せるのは、ジャンルを作った本人か、自分で足した人だけ
-  const removable = (g: { id: string; created_by: string }) => !!user && (g.created_by === user.id || mine.has(g.id))
+  const { data: saved } = user
+    ? await supabase.from("saved_rooms").select("room_id").eq("room_id", room.id).maybeSingle()
+    : { data: null }
+  const genre = room.genres
+  // 消せるのは、部屋が入っているジャンルを作った本人だけ（公式ジャンルとジャンルなしの部屋は誰も消せない。RLS でも守っている）
+  const deletable = !!user && !!genre?.created_by && genre.created_by === user.id
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
@@ -84,38 +80,15 @@ export default async function RoomPage({ params }: Props) {
           </div>
         </section>
 
-        {(room.tags.length > 0 || (genres ?? []).length > 0) && (
+        {genre && (
           <section className="space-y-3" aria-labelledby="genres-title">
             <h2 id="genres-title" className="text-[1.0625rem] font-semibold">ジャンル</h2>
-            <ul className="flex flex-wrap items-center gap-2">
-              {room.tags.map((t) => (
-                <li key={t}>
-                  <Link href={`/?tag=${encodeURIComponent(t)}`} className={chipClass}>
-                    {t}
-                  </Link>
-                </li>
-              ))}
-              {(genres ?? []).map((g) => (
-                <li key={g.id} className="flex items-center">
-                  <Link href={`/?genre=${g.id}`} className={`${chipClass} ${removable(g) ? "rounded-r-none pr-2" : ""}`}>
-                    {g.name}
-                  </Link>
-                  {removable(g) && (
-                    <form action={removeFromGenre}>
-                      <input type="hidden" name="roomId" value={room.id} />
-                      <input type="hidden" name="genreId" value={g.id} />
-                      <button
-                        type="submit"
-                        aria-label={`「${g.name}」から外す`}
-                        className="focus-ring inline-flex min-h-11 items-center rounded-r-full border border-l-0 border-outline px-3 text-on-surface-variant hover:bg-surface-container-high"
-                      >
-                        ×
-                      </button>
-                    </form>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Link href={`/?genre=${genre.id}`} className={chipClass}>
+                {genre.name}
+              </Link>
+              {deletable && <RoomDelete roomId={room.id} />}
+            </div>
           </section>
         )}
 

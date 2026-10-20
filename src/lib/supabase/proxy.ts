@@ -37,18 +37,20 @@ export async function updateSession(request: NextRequest) {
     pathname === "/auth/confirm" || pathname.startsWith("/auth/google") || pathname === "/privacy" || pathname === "/terms";
 
   if (!user && !isPublicRoute) {
+    // ログインのあと、クエリ（/add?genre=… など）ごと元のページに戻す
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.search = "";
+    url.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
   if (user && isAuthRoute) {
-    const next = request.nextUrl.searchParams.get("next");
-    const url = request.nextUrl.clone();
-    url.pathname = next ?? "/";
-    url.search = "";
-    return NextResponse.redirect(url);
+    // next はこのサイトの中のパスだけ（//evil.com や /\evil.com で外に飛ばさない）
+    const next = request.nextUrl.searchParams.get("next") ?? "/";
+    const { origin } = request.nextUrl;
+    const url = new URL(next.startsWith("/") ? next : "/", origin);
+    return NextResponse.redirect(url.origin === origin ? url : new URL("/", origin));
   }
 
   return supabaseResponse;

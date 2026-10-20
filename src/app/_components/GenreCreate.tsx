@@ -20,15 +20,6 @@ function CreateForm() {
         </label>
         <input id="genre-name" name="name" required maxLength={12} placeholder="グリーンのある部屋" className={input} />
       </div>
-      <div className="space-y-1">
-        <label htmlFor="genre-keyword" className="block text-[0.8125rem] text-on-surface-variant">
-          集める言葉（空ならジャンル名と同じ）
-        </label>
-        <input id="genre-keyword" name="keyword" maxLength={20} placeholder="グリーン" className={input} />
-        <p className="text-[0.8125rem] text-on-surface-variant">
-          動画のタイトルや家具の名前にこの言葉がある部屋が、自動で入ります。
-        </p>
-      </div>
       {state.error && (
         <p role="alert" className="text-[0.875rem] text-error">
           {state.error}

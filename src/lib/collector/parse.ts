@@ -33,20 +33,6 @@ export function parseItems(description: string): { label: string; url: string }[
   return items
 }
 
-const TAGS: [string, RegExp][] = [
-  ["韓国", /韓国/],
-  ["北欧", /北欧/],
-  ["ナチュラル", /ナチュラル/],
-  ["カフェ", /カフェ/],
-  ["モノトーン", /モノトーン|白黒/],
-  ["ホテルライク", /ホテルライク/],
-  ["アンティーク", /アンティーク|ヴィンテージ|ビンテージ/],
-  ["ミニマル", /ミニマル|ミニマリスト/],
-]
-export const TAG_NAMES = TAGS.map(([name]) => name)
-
-export const detectTags = (text: string) => TAGS.filter(([, re]) => re.test(text)).map(([name]) => name)
-
 export const hashText = (text: string) => createHash("sha256").update(text).digest("hex")
 
 // 家具・インテリアの動画か（タイトルと説明欄の言葉で判定する）

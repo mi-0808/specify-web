@@ -24,3 +24,20 @@ export async function toggleSave(formData: FormData) {
   revalidatePath(`/rooms/${roomId}`)
   revalidatePath("/saved")
 }
+
+// ジャンルを作った本人だけが消せる（RLS で守っている。消せなかったときは0件になる）。家具・保存は外部キーで一緒に消える
+export async function deleteRoom(formData: FormData) {
+  const roomId = String(formData.get("roomId") ?? "")
+  if (!/^[\w-]{11}$/.test(roomId)) return
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect(`/login?next=/rooms/${roomId}`)
+
+  const { data, error } = await supabase.from("rooms").delete().eq("id", roomId).select("genre_id")
+  if (error || !data.length) throw new Error("部屋を消せませんでした。")
+
+  revalidatePath("/")
+  revalidatePath("/saved")
+  redirect(data[0].genre_id ? `/?genre=${data[0].genre_id}` : "/")
+}

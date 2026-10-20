@@ -24,15 +24,9 @@ export interface Database {
         ];
       };
       genres: {
-        Row: { id: string; name: string; keyword: string; created_by: string; created_at: string };
-        Insert: { id?: string; name: string; keyword: string; created_by: string; created_at?: string };
+        Row: { id: string; name: string; created_by: string | null; created_at: string };
+        Insert: { id?: string; name: string; created_by?: string | null; created_at?: string };
         Update: Partial<Database["public"]["Tables"]["genres"]["Insert"]>;
-        Relationships: [];
-      };
-      room_genres: {
-        Row: { room_id: string; genre_id: string; excluded: boolean; added_by: string; created_at: string };
-        Insert: { room_id: string; genre_id: string; excluded?: boolean; added_by: string; created_at?: string };
-        Update: Partial<Database["public"]["Tables"]["room_genres"]["Insert"]>;
         Relationships: [];
       };
       saved_rooms: {
@@ -57,7 +51,7 @@ export interface Database {
           channel_title: string;
           thumbnail_url: string;
           published_at: string;
-          tags: string[];
+          genre_id: string | null;
           description_hash: string;
           refreshed_at: string;
         };
@@ -68,12 +62,20 @@ export interface Database {
           channel_title: string;
           thumbnail_url: string;
           published_at: string;
-          tags?: string[];
+          genre_id?: string | null;
           description_hash: string;
           refreshed_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["rooms"]["Insert"]>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "rooms_genre_id_fkey";
+            columns: ["genre_id"];
+            isOneToOne: false;
+            referencedRelation: "genres";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       room_items: {
         Row: {
@@ -358,19 +360,9 @@ export interface Database {
     };
     Views: { [_ in never]: never };
     Functions: {
-      rooms_in_genre: {
-        Args: { gid: string };
-        Returns: Database["public"]["Tables"]["rooms"]["Row"][];
-        SetofOptions: { from: "*"; to: "rooms"; isOneToOne: false; isSetofReturn: true };
-      };
-      genres_for_room: {
-        Args: { rid: string };
-        Returns: Database["public"]["Tables"]["genres"]["Row"][];
-        SetofOptions: { from: "*"; to: "genres"; isOneToOne: false; isSetofReturn: true };
-      };
       genres_with_counts: {
         Args: Record<PropertyKey, never>;
-        Returns: { id: string; name: string; room_count: number }[];
+        Returns: { id: string; name: string; created_by: string | null; room_count: number }[];
       };
     };
     Enums: { [_ in never]: never };

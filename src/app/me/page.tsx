@@ -26,7 +26,7 @@ export default async function MyPage() {
   const rooms = (explored ?? []).flatMap((e) => (e.rooms ? [e.rooms] : []))
 
   const { data: genres } = user
-    ? await supabase.from("genres").select("id, name, keyword").eq("created_by", user.id).order("created_at", { ascending: false })
+    ? await supabase.from("genres").select("id, name").eq("created_by", user.id).order("created_at", { ascending: false })
     : { data: [] }
   const { data: counts } = genres?.length
     ? await supabase.rpc("genres_with_counts").in("id", genres.map((g) => g.id))
@@ -75,7 +75,7 @@ export default async function MyPage() {
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[0.9375rem]">{g.name}</span>
                           <span className="block truncate text-[0.8125rem] text-on-surface-variant">
-                            {roomCount.get(g.id) ?? 0}部屋 ・ 集める言葉「{g.keyword}」
+                            {roomCount.get(g.id) ?? 0}部屋
                           </span>
                         </span>
                         <span aria-hidden="true" className="text-on-surface-variant">›</span>

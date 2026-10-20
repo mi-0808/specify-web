@@ -28,7 +28,7 @@ export function GenreDelete({ id, name }: { id: string; name: string }) {
           「{name}」を消しますか？
         </h2>
         <p className="mb-4 text-[0.9375rem] leading-[1.6] text-on-surface-variant">
-          一覧から消え、みんなも見られなくなります。部屋そのものは消えません。
+          ジャンルの列から消えます。入っていた部屋は消えず、「すべて」に残ります。
         </p>
         <form action={deleteGenre} className="space-y-2">
           <input type="hidden" name="genreId" value={id} />

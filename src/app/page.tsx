@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { createClient, getUser } from "@/lib/supabase/server"
-import { TAG_NAMES } from "@/lib/collector/parse"
 import { SiteHeader } from "./_components/SiteHeader"
 import { AddRoomCard, ROOM_CARD_SELECT, RoomCard } from "./_components/RoomCard"
 import { GenreCreate } from "./_components/GenreCreate"
@@ -9,22 +8,22 @@ import { LargeTitle } from "./_components/LargeTitle"
 
 const PAGE_SIZE = 24
 
-type Props = { searchParams: Promise<{ tag?: string; genre?: string; page?: string }> }
+type Props = { searchParams: Promise<{ genre?: string; page?: string }> }
 
 const UUID = /^[0-9a-f-]{36}$/i
 
 // 眺めて見つける（docs/specify-design.md 2章）
 export default async function DiscoverPage({ searchParams }: Props) {
   const params = await searchParams
-  const tag = TAG_NAMES.includes(params.tag ?? "") ? params.tag! : null
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1)
   const from = (page - 1) * PAGE_SIZE
 
   const supabase = await createClient()
   const { data: { user } } = await getUser()
   const [{ data: genres, error: genresError }, { data: savedRows }] = await Promise.all([
-    // ponytail: ユーザーのジャンルは部屋の多い順に20個まで。増えたら「もっと見る」かジャンル一覧ページを作る
-    supabase.rpc("genres_with_counts").gt("room_count", 0).order("room_count", { ascending: false }).limit(20),
+    // 公式の8つが先、そのあとユーザーのジャンルを部屋の多い順に（作ったばかりの0部屋のジャンルも出す）
+    // ponytail: 全部並べる。ジャンルが増えて列が長くなったら「もっと見る」かジャンル一覧ページを作る
+    supabase.rpc("genres_with_counts").select("id, name"),
     // 毎日開く理由として、ログイン中は保存した部屋を「また見る」で上に出す
     user
       ? supabase.from("saved_rooms").select("rooms(id, title, thumbnail_url)").order("created_at", { ascending: false }).limit(10)
@@ -32,35 +31,28 @@ export default async function DiscoverPage({ searchParams }: Props) {
   ])
   const savedRooms = (savedRows ?? []).flatMap((r) => (r.rooms ? [r.rooms] : []))
   if (genresError) throw genresError
-  // 作ったばかりで部屋が0件のジャンルは上の一覧に入らないので、直接読む
-  const genreId = UUID.test(params.genre ?? "") ? params.genre! : null
-  const genre = genreId
-    ? (genres.find((g) => g.id === genreId) ??
-      (await supabase.from("genres").select("id, name").eq("id", genreId).maybeSingle()).data)
-    : null
+  const genre = UUID.test(params.genre ?? "") ? (genres.find((g) => g.id === params.genre) ?? null) : null
 
-  // RPC の結果は select に入れた列でしか並べ替えられないので、published_at も取る
-  const base = genre
-    ? supabase.rpc("rooms_in_genre", { gid: genre.id }).select(`${ROOM_CARD_SELECT}, published_at`)
-    : supabase.from("rooms").select(ROOM_CARD_SELECT)
-  let query = base.order("published_at", { ascending: false }).range(from, from + PAGE_SIZE) // 1件多く取って、続きがあるか判定する
-  if (tag && !genre) query = query.contains("tags", [tag])
+  let query = supabase
+    .from("rooms")
+    .select(ROOM_CARD_SELECT)
+    .order("published_at", { ascending: false })
+    .range(from, from + PAGE_SIZE) // 1件多く取って、続きがあるか判定する
+  if (genre) query = query.eq("genre_id", genre.id)
   const { data, error } = await query
   if (error) throw error
   const rooms = data.slice(0, PAGE_SIZE)
   const hasMore = data.length > PAGE_SIZE
-  const filterName = genre?.name ?? tag
-  const genreChips = genre && !genres.some((g) => g.id === genre.id) ? [...genres, genre] : genres
+  const filterName = genre?.name
 
-  const href = (filter: { tag?: string; genre?: string } | null, p = 1) => {
+  const href = (genreId: string | null, p = 1) => {
     const q = new URLSearchParams()
-    if (filter?.tag) q.set("tag", filter.tag)
-    if (filter?.genre) q.set("genre", filter.genre)
+    if (genreId) q.set("genre", genreId)
     if (p > 1) q.set("page", String(p))
     const s = q.toString()
     return s ? `/?${s}` : "/"
   }
-  const current = genre ? { genre: genre.id } : tag ? { tag } : null
+  const current = genre?.id ?? null
   const showSaved = savedRooms.length > 0 && !filterName && page === 1
 
   return (
@@ -103,10 +95,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
         <nav aria-label="ジャンルで絞り込む">
           <ul className="flex flex-wrap gap-2">
             <FilterChips
-              chips={[
-                ...TAG_NAMES.map((t) => ({ key: `tag:${t}`, label: t, href: href(t === tag ? null : { tag: t }), active: t === tag })),
-                ...genreChips.map((g) => ({ key: g.id, label: g.name, href: href(g.id === genre?.id ? null : { genre: g.id }), active: g.id === genre?.id })),
-              ]}
+              chips={genres.map((g) => ({ key: g.id, label: g.name, href: href(g.id === genre?.id ? null : g.id), active: g.id === genre?.id }))}
             />
             <li>
               <GenreCreate loggedIn={!!user} />
@@ -117,7 +106,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
         {rooms.length === 0 && (
           <div className="space-y-2">
             <p className="text-[1.0625rem] leading-[1.7]">
-              {filterName ? `「${filterName}」の部屋はまだありません。` : "部屋を集めています。しばらくしてからもう一度ご覧ください。"}
+              {filterName ? `「${filterName}」の部屋はまだありません。` : "まだ部屋がありません。気になる動画のリンクを貼って、最初の部屋を入れてください。"}
             </p>
             {filterName && (
               <Link href="/" className="focus-ring inline-block rounded text-[0.9375rem] text-primary underline underline-offset-4">
@@ -136,7 +125,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
           {/* 一覧の最後（続きがないとき）と、部屋がないときに「動画から部屋を追加」のカードを置く */}
           {!hasMore && (
             <li>
-              <AddRoomCard />
+              <AddRoomCard genreId={genre?.id} />
             </li>
           )}
         </ul>

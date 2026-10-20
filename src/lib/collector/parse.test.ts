@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { detectTags, isInteriorVideo, parseItems, youtubeIdFromUrl } from "./parse"
+import { isInteriorVideo, parseItems, youtubeIdFromUrl } from "./parse"
 
 // 実際のルームツアー動画の説明欄によくある書き方を再現したもの
 const description = `お部屋にあるものの詳細は以下になります！
@@ -43,12 +43,6 @@ describe("parseItems", () => {
 
   it("長すぎる文はラベルにしない", () => {
     expect(parseItems("何か皆様の家具やインテリア探しのお役に立てたら嬉しいですというとても長い文章です\nhttps://a.r10.to/x")).toEqual([])
-  })
-})
-
-describe("detectTags", () => {
-  it("タイトルや説明欄の言葉から雰囲気のタグを付ける", () => {
-    expect(detectTags("1K8畳 IKEAと韓国インテリア｜北欧×ヴィンテージ")).toEqual(["韓国", "北欧", "アンティーク"])
   })
 })
 

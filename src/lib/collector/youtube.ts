@@ -1,4 +1,4 @@
-// YouTube Data API v3（公式 API）。search.list は1回100ユニット、videos.list は50件ごとに1ユニット
+// YouTube Data API v3（公式 API）。videos.list は50件ごとに1ユニット
 const API = "https://www.googleapis.com/youtube/v3"
 
 export type Video = {
@@ -17,20 +17,6 @@ async function get(path: string, params: Record<string, string>) {
   const res = await fetch(`${API}/${path}?${new URLSearchParams(params)}`, { signal: AbortSignal.timeout(15000) })
   if (!res.ok) throw new Error(`YouTube ${path} failed: ${res.status} ${await res.text()}`)
   return res.json()
-}
-
-export async function searchVideoIds(key: string, q: string): Promise<string[]> {
-  const data = await get("search", {
-    part: "id",
-    q,
-    type: "video",
-    maxResults: "25",
-    regionCode: "JP",
-    relevanceLanguage: "ja",
-    videoEmbeddable: "true",
-    key,
-  })
-  return data.items.map((i: { id: { videoId?: string } }) => i.id.videoId).filter(Boolean)
 }
 
 type ApiVideo = {

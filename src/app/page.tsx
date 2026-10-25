@@ -21,9 +21,8 @@ export default async function DiscoverPage({ searchParams }: Props) {
   const supabase = await createClient()
   const { data: { user } } = await getUser()
   const [{ data: genres, error: genresError }, { data: savedRows }] = await Promise.all([
-    // 公式の8つが先、そのあとユーザーのジャンルを部屋の多い順に（作ったばかりの0部屋のジャンルも出す）
-    // ponytail: 全部並べる。ジャンルが増えて列が長くなったら「もっと見る」かジャンル一覧ページを作る
-    supabase.rpc("genres_with_counts").select("id, name"),
+    // 公式もユーザーのジャンルも、部屋の多い順に（作ったばかりの0部屋のジャンルも出す）。スマホは3行目から先を「もっと見る」で開く
+    supabase.rpc("genres_with_counts").select("id, name, room_count").order("room_count", { ascending: false }),
     // 毎日開く理由として、ログイン中は保存した部屋を「また見る」で上に出す
     user
       ? supabase.from("saved_rooms").select("rooms(id, title, thumbnail_url)").order("created_at", { ascending: false }).limit(10)
@@ -57,9 +56,10 @@ export default async function DiscoverPage({ searchParams }: Props) {
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-8 pt-4 md:pt-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-5 pb-8 pt-4 md:gap-8 md:pt-8">
         <SiteHeader current="discover" />
-        <LargeTitle brand title="さがす" subtitle="ルームツアーの家具と、その買える場所" />
+        {/* スマホは最初の画面でタイムラインを多く見せたいので、サブタイトルは出さない */}
+        <LargeTitle brand title="さがす" />
         {/* パソコンは今の見出しのまま */}
         <section className="hidden space-y-3 md:block">
           <h1 className="text-[1.75rem] font-bold leading-[1.4]">見つけた部屋の家具を、そのまま探せる。</h1>
@@ -93,14 +93,13 @@ export default async function DiscoverPage({ searchParams }: Props) {
         )}
 
         <nav aria-label="ジャンルで絞り込む">
-          <ul className="flex flex-wrap gap-2">
-            <FilterChips
-              chips={genres.map((g) => ({ key: g.id, label: g.name, href: href(g.id === genre?.id ? null : g.id), active: g.id === genre?.id }))}
-            />
-            <li>
-              <GenreCreate loggedIn={!!user} />
-            </li>
-          </ul>
+          <FilterChips
+            chips={[
+              { key: "all", label: "すべて", href: "/", active: !genre },
+              ...genres.map((g) => ({ key: g.id, label: g.name, href: href(g.id === genre?.id ? null : g.id), active: g.id === genre?.id })),
+            ]}
+            trailing={<GenreCreate loggedIn={!!user} />}
+          />
         </nav>
 
         {rooms.length === 0 && (

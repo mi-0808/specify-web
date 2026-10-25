@@ -42,6 +42,8 @@ export default function RootLayout({
               <Link href="/privacy" className="focus-ring inline-flex min-h-11 items-center rounded underline underline-offset-4">プライバシーポリシー</Link>
             </li>
           </ul>
+          {/* Amazon アソシエイト・プログラム運営規約 第5条で決まっている一文 */}
+          <p className="mb-1.5 text-balance leading-[1.6]">Amazonのアソシエイトとして、Specify は適格販売により収入を得ています。</p>
           <p>© 2026 Specify</p>
         </footer>
         <TabBar />

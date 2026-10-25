@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
 import { hashText, isInteriorVideo, parseItems } from "./parse"
 import { resolveProduct } from "./resolve"
-import { SHOP_HOSTS } from "./shops"
+import { amazonLink, SHOP_HOSTS } from "./shops"
 import { getVideos, type Video } from "./youtube"
 
 const MIN_ITEMS = 3 // 買える家具がこれ未満の動画は出さない
@@ -128,7 +128,9 @@ async function resolveItems(description: string) {
     const p = products[i]
     // 「Amazon」「楽天」のような店名だけのラベルで商品名も取れないものは、何の家具か分からないので出さない
     if (!p || (!p.title && GENERIC_LABELS.has(l.label))) return []
-    return [{ label: l.label, url: l.url, shop_host: p.host, product_title: p.title, image_url: p.image }]
+    // ponytail: タグは読み直したときに付く。タグを変えたら、説明欄が変わっていない部屋は古いリンクのまま（全部読み直す処理が要る）
+    const url = amazonLink(p.url, process.env.AMAZON_ASSOCIATE_TAG) ?? l.url
+    return [{ label: l.label, url, shop_host: p.host, product_title: p.title, image_url: p.image }]
   })
 }
 

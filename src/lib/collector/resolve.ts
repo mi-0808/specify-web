@@ -1,6 +1,7 @@
 import { isAllowedHost, isShopHost } from "./shops"
 
-export type Product = { host: string; title: string | null; image: string | null }
+// url は最初にたどり着いた店のページ（店の中でさらに転送されても、商品の URL を残すため）
+export type Product = { host: string; url: string; title: string | null; image: string | null }
 
 const MAX_HOPS = 5
 const MAX_BYTES = 512 * 1024
@@ -17,9 +18,11 @@ export async function resolveProduct(url: string, fetchImpl: typeof fetch = fetc
     return null
   }
 
+  let landed: string | undefined
   for (let hop = 0; hop <= MAX_HOPS; hop++) {
     if (current.protocol !== "https:" || !isAllowedHost(current.hostname)) return null
     if (isRakutenRoomProfile(current)) return null
+    if (isShopHost(current.hostname)) landed ??= current.href
 
     const res = await fetchImpl(current, {
       redirect: "manual",
@@ -39,9 +42,10 @@ export async function resolveProduct(url: string, fetchImpl: typeof fetch = fetc
     const html = res?.ok ? await readHead(res).catch(() => "") : ""
     const title = cleanTitle(ogContent(html, "og:title"))
     const image = httpsOnly(ogContent(html, "og:image"))
+    const page = { host: current.hostname, url: landed ?? current.href }
     // ロボット向けの汎用ページ（Amazon など）は、取れなかったものとして扱う
-    if (title === "Amazon" || image?.includes("/share-icons/")) return { host: current.hostname, title: null, image: null }
-    return { host: current.hostname, title, image }
+    if (title === "Amazon" || image?.includes("/share-icons/")) return { ...page, title: null, image: null }
+    return { ...page, title, image }
   }
   return null
 }

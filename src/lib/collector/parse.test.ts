@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isInteriorVideo, parseItems, youtubeIdFromUrl } from "./parse"
+import { parseItems, youtubeIdFromUrl } from "./parse"
 
 // 実際のルームツアー動画の説明欄によくある書き方を再現したもの
 const description = `お部屋にあるものの詳細は以下になります！
@@ -63,14 +63,5 @@ describe("youtubeIdFromUrl", () => {
     for (const url of ["https://www.instagram.com/reel/abc", "https://evil.com/watch?v=ozcC9rN1RlQ", "javascript:alert(1)", "ozcC9rN1RlQ", "https://youtu.be/short"]) {
       expect(youtubeIdFromUrl(url), url).toBeNull()
     }
-  })
-})
-
-describe("isInteriorVideo", () => {
-  it("部屋・インテリアの動画だけを通す", () => {
-    expect(isInteriorVideo("【ルームツアー】1K8畳の一人暮らし")).toBe(true)
-    expect(isInteriorVideo("北欧インテリアで模様替え")).toBe(true)
-    expect(isInteriorVideo("【料理】5分でできるパスタ")).toBe(false)
-    expect(isInteriorVideo("ゲーム実況 #12")).toBe(false)
   })
 })

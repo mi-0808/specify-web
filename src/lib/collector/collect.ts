@@ -1,11 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
-import { hashText, isInteriorVideo, parseItems } from "./parse"
+import { hashText, parseItems } from "./parse"
 import { resolveProduct } from "./resolve"
 import { amazonLink, rakutenLink, SHOP_HOSTS } from "./shops"
 import { getVideos, type Video } from "./youtube"
 
-const MIN_ITEMS = 3 // 買える家具がこれ未満の動画は出さない
 const MAX_LINKS = 30 // 1本の説明欄から取りに行く URL の上限
 const VIDEO_CONCURRENCY = 4 // 動画4本 × 商品ページ4件 = 同時に最大16件まで取りに行く
 const DEADLINE_MS = 240_000 // Vercel の maxDuration（300秒）より前に打ち切る
@@ -13,7 +12,7 @@ const DEADLINE_MS = 240_000 // Vercel の maxDuration（300秒）より前に打
 type Db = SupabaseClient<Database>
 
 // docs/specify-design.md 3章。部屋は /add で人が入れる。毎日の収集は、YouTube の規約に合わせて
-// 保存済みの動画を取り直し、説明欄が変わった動画は家具を読み直し、消えたものは削除する
+// 保存済みの動画を取り直し、説明欄が変わった動画は家具を読み直し、消えた・埋め込み不可になったものは削除する
 export async function collect(apiKey: string, db: Db) {
   const startedAt = Date.now()
   const known = await loadKnownRooms(db)
@@ -42,10 +41,8 @@ export async function collect(apiKey: string, db: Db) {
       return
     }
 
-    // 説明欄が変わった。条件を満たさなくなっていたら消す
-    const checked = await inspectVideo(v)
-    if (!checked.ok) return
-    await saveRoom(db, v, checked.items, room.genreId)
+    // 説明欄が変わったので、家具を読み直す
+    await saveRoom(db, v, await resolveItems(v.description), room.genreId)
     alive.add(v.id)
     reread++
   })
@@ -60,21 +57,14 @@ export async function collect(apiKey: string, db: Db) {
 
 export type InspectResult =
   | { ok: true; video: Video; items: Item[] }
-  | { ok: false; reason: "not-found" | "not-embeddable" | "not-interior" | "no-items" }
+  | { ok: false; reason: "not-found" | "not-embeddable" }
 
-// 貼られた動画1本を調べる（/add）。家具・インテリアの動画で、買える家具が3つ以上あるときだけ ok
+// 貼られた動画1本を調べる（/add）。公開されていて、埋め込みが許可されていれば ok（家具の数は問わない）
 export async function inspectVideoById(apiKey: string, videoId: string): Promise<InspectResult> {
   const [v] = await getVideos(apiKey, [videoId])
   if (!v || !v.isPublic) return { ok: false, reason: "not-found" }
   if (!v.embeddable) return { ok: false, reason: "not-embeddable" }
-  return inspectVideo(v)
-}
-
-async function inspectVideo(v: Video): Promise<InspectResult> {
-  if (!isInteriorVideo(`${v.title}\n${v.description}`)) return { ok: false, reason: "not-interior" }
-  const items = await resolveItems(v.description)
-  if (items.length < MIN_ITEMS) return { ok: false, reason: "no-items" }
-  return { ok: true, video: v, items }
+  return { ok: true, video: v, items: await resolveItems(v.description) }
 }
 
 const toRoom = (v: Video, hash: string, genreId: string | null) => ({
@@ -97,10 +87,12 @@ export async function saveRoom(db: Db, v: Video, items: Item[], genreId: string 
   if (upsertError) throw upsertError
   const { error: deleteError } = await db.from("room_items").delete().eq("room_id", v.id)
   if (deleteError) throw deleteError
-  const { error: insertError } = await db
-    .from("room_items")
-    .insert(items.map((item, position) => ({ ...item, room_id: v.id, position })))
-  if (insertError) throw insertError
+  if (items.length) {
+    const { error: insertError } = await db
+      .from("room_items")
+      .insert(items.map((item, position) => ({ ...item, room_id: v.id, position })))
+    if (insertError) throw insertError
+  }
   const { error: hashError } = await db.from("rooms").update({ description_hash: hashText(v.description) }).eq("id", v.id)
   if (hashError) throw hashError
 }

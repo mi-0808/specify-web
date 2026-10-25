@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Suspense } from "react";
+import Link from "next/link";
 import { TabBar } from "./_components/TabBar";
 import { NavProgress } from "./_components/NavProgress";
 
@@ -31,6 +32,18 @@ export default function RootLayout({
           <NavProgress />
         </Suspense>
         {children}
+        {/* 全ページの一番下。規約はアプリの中からいつでも開けるようにする（App Store 審査 5.1.1） */}
+        <footer className="border-t border-outline-variant/70 bg-surface px-5 pb-5 pt-3 text-center text-[0.8125rem] text-on-surface-variant">
+          <ul className="flex justify-center gap-x-4">
+            <li>
+              <Link href="/terms" className="focus-ring inline-flex min-h-11 items-center rounded underline underline-offset-4">利用規約</Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="focus-ring inline-flex min-h-11 items-center rounded underline underline-offset-4">プライバシーポリシー</Link>
+            </li>
+          </ul>
+          <p>© 2026 Specify</p>
+        </footer>
         <TabBar />
       </body>
     </html>

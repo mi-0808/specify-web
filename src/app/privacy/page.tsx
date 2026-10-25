@@ -45,8 +45,8 @@ export default function PrivacyPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className={h2}>6. Amazonアソシエイト</h2>
-          <p className={p}>本サービスは Amazon のアソシエイトとして、紹介した商品が Amazon で買われると紹介料を受け取ります。Amazon へのリンクを開くと、Amazon が Cookie などを使って、どのリンクから来たかを記録します。運営者から Amazon に、利用者の情報を渡すことはありません。</p>
+          <h2 className={h2}>6. Amazonアソシエイト・楽天アフィリエイト</h2>
+          <p className={p}>本サービスは Amazon のアソシエイト、楽天アフィリエイトのパートナーとして、紹介した商品が Amazon・楽天市場で買われると紹介料を受け取ります。Amazon・楽天へのリンクを開くと、それぞれが Cookie などを使って、どのリンクから来たかを記録します。運営者から Amazon・楽天に、利用者の情報を渡すことはありません。</p>
         </section>
 
         <section className="space-y-2">

@@ -41,3 +41,12 @@ export function amazonLink(url: string, tag: string | undefined): string | null 
   u.searchParams.set("tag", tag)
   return u.href
 }
+
+// 楽天市場の商品ページを、Specify の楽天アフィリエイトのリンクにする（クリエイターのリンクは外す。2026-10-25 決定）
+// 楽天ROOM の投稿と同じ hb.afl.rakuten.co.jp/hgc/{アフィリエイトID}/?pc={商品の URL} の形。開くと楽天の商品ページに転送される
+// 楽天市場の商品ページ以外と、ID が設定されていないときは null（説明欄のリンクをそのまま使う）
+export function rakutenLink(url: string, affiliateId: string | undefined): string | null {
+  const u = new URL(url)
+  if (!affiliateId || u.hostname !== "item.rakuten.co.jp" || !/^\/[^/]+\/[^/]+\/?$/.test(u.pathname)) return null
+  return `https://hb.afl.rakuten.co.jp/hgc/${affiliateId}/?pc=${encodeURIComponent(u.origin + u.pathname)}`
+}

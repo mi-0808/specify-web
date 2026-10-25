@@ -1,7 +1,8 @@
 import { isAllowedHost, isShopHost } from "./shops"
 
 // url は最初にたどり着いた店のページ（店の中でさらに転送されても、商品の URL を残すため）
-export type Product = { host: string; url: string; title: string | null; image: string | null }
+// item は楽天ROOM の投稿が紹介している楽天市場の商品ページ
+export type Product = { host: string; url: string; title: string | null; image: string | null; item?: string }
 
 const MAX_HOPS = 5
 const MAX_BYTES = 512 * 1024
@@ -45,7 +46,8 @@ export async function resolveProduct(url: string, fetchImpl: typeof fetch = fetc
     const page = { host: current.hostname, url: landed ?? current.href }
     // ロボット向けの汎用ページ（Amazon など）は、取れなかったものとして扱う
     if (title === "Amazon" || image?.includes("/share-icons/")) return { ...page, title: null, image: null }
-    return { ...page, title, image }
+    const item = current.hostname === "room.rakuten.co.jp" ? roomItem(html) : undefined
+    return { ...page, title, image, ...(item && { item }) }
   }
   return null
 }
@@ -53,6 +55,19 @@ export async function resolveProduct(url: string, fetchImpl: typeof fetch = fetc
 // 楽天ROOM は「/ユーザー名/数字」が商品。「/ユーザー名」「/ユーザー名/items」は人のおすすめ一覧なので家具として出さない
 const isRakutenRoomProfile = (u: URL) =>
   u.hostname === "room.rakuten.co.jp" && !/^\/[^/]+\/\d+\/?$/.test(u.pathname)
+
+// 楽天ROOM の投稿ページには、元の商品へのリンクが hb.afl.rakuten.co.jp/hgc/…/_RTroom…_pc?pc=（商品の URL）で入っている
+// 「_RTroom数字rp_」は下に並ぶ関連商品なので外す
+function roomItem(html: string): string | undefined {
+  const pc = html.match(/hb\.afl\.rakuten\.co\.jp\/hgc\/[^"'\s]*?\/_RTroom\d+_[^"'\s?]*\?pc=([^"'\s&]+)/)?.[1]
+  if (!pc) return undefined
+  try {
+    const u = new URL(decodeURIComponent(pc))
+    return u.protocol === "https:" && u.hostname === "item.rakuten.co.jp" ? `${u.origin}${u.pathname}` : undefined
+  } catch {
+    return undefined
+  }
+}
 
 async function readHead(res: Response): Promise<string> {
   if (!res.body) return ""

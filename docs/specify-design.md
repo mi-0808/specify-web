@@ -139,6 +139,7 @@ Vercel Cron（1日1回、日本時間 3:00）
 - 取れなかったときは、説明欄のラベルと店の名前だけで表示する。Amazon はロボットに汎用ページしか返さないので、今は商品名・写真が取れない（段階2で、Amazon のアフィリエイト API を使って取る）。
 - 楽天の商品名は、先頭の宣伝（【ポイント5倍】＼激安！／[セール…] など）と末尾のショップ名を外して保存する。
 - 商品写真は店が共有用に出している画像（og:image）を、そのまま表示する（こちらには保存しない）。
+- Amazon のリンクは、最初にたどり着いた Amazon のページから商品番号（ASIN）を取り、`https://www.amazon.co.jp/dp/{ASIN}?tag={AMAZON_ASSOCIATE_TAG}` に替えて保存する。クリエイターのタグは外す。商品ページ以外（検索など）は、行き先はそのままでタグだけ替える。`AMAZON_ASSOCIATE_TAG` が空なら説明欄のリンクのまま。楽天などは説明欄のリンクのまま。
 
 ---
 
@@ -156,7 +157,7 @@ room_items(
   room_id text references rooms on delete cascade,
   position int,                 -- 説明欄での順番
   label text,                   -- 説明欄のラベル（「デスク」）
-  url text,                     -- クリエイターのリンク（そのまま使う）
+  url text,                     -- 家具のリンク（Amazon は Specify のタグ付き、ほかはクリエイターのリンクのまま。5章）
   shop_host text,               -- 最後にたどり着いた店のホスト
   product_title text, image_url text,   -- 商品ページから取れたもの（なければ null）
   primary key (room_id, position)

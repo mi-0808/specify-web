@@ -11,7 +11,7 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-surface text-on-surface">
       <article className="mx-auto flex w-full max-w-xl flex-col gap-6 px-5 pb-12 pt-4 md:pt-8">
-        <LargeTitle title="プライバシーポリシー" subtitle="2026年10月17日 制定" alsoDesktop />
+        <LargeTitle title="プライバシーポリシー" subtitle="2026年10月17日 制定・2026年10月25日 改定" alsoDesktop />
 
         <p className={p}>Specify運営者（以下「運営者」）は、Specify（以下「本サービス」）で扱う利用者の情報を、次のとおり取り扱います。</p>
 
@@ -45,17 +45,22 @@ export default function PrivacyPage() {
         </section>
 
         <section className="space-y-2">
-          <h2 className={h2}>6. 削除の依頼</h2>
+          <h2 className={h2}>6. Amazonアソシエイト</h2>
+          <p className={p}>本サービスは Amazon のアソシエイトとして、紹介した商品が Amazon で買われると紹介料を受け取ります。Amazon へのリンクを開くと、Amazon が Cookie などを使って、どのリンクから来たかを記録します。運営者から Amazon に、利用者の情報を渡すことはありません。</p>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className={h2}>7. 削除の依頼</h2>
           <p className={p}>アカウントと保存した内容の削除を希望するときは、下の問い合わせ先にご連絡ください。確認のうえ削除します。</p>
         </section>
 
         <section className="space-y-2">
-          <h2 className={h2}>7. 変更</h2>
+          <h2 className={h2}>8. 変更</h2>
           <p className={p}>このポリシーを変えるときは、このページでお知らせします。</p>
         </section>
 
         <section className="space-y-2">
-          <h2 className={h2}>8. 問い合わせ先</h2>
+          <h2 className={h2}>9. 問い合わせ先</h2>
           <p className={p}>Specify運営者<br /><a href="mailto:m22121139@gmail.com" className="text-primary underline underline-offset-2">m22121139@gmail.com</a></p>
         </section>
       </article>

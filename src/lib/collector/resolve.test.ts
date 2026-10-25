@@ -1,5 +1,29 @@
 import { describe, expect, it, vi } from "vitest"
 import { resolveProduct } from "./resolve"
+import { amazonLink } from "./shops"
+
+describe("amazonLink", () => {
+  it("Amazon の商品ページは、クリエイターのタグを外して Specify のタグだけの短いリンクにする", () => {
+    expect(amazonLink("https://www.amazon.co.jp/白いデスク/dp/B0ABCDE123/ref=sr_1?tag=creator-22&linkCode=ll1", "specify-22")).toBe(
+      "https://www.amazon.co.jp/dp/B0ABCDE123?tag=specify-22",
+    )
+    expect(amazonLink("https://amazon.co.jp/gp/product/B0ABCDE123", "specify-22")).toBe(
+      "https://www.amazon.co.jp/dp/B0ABCDE123?tag=specify-22",
+    )
+  })
+
+  it("商品ページ以外は、行き先はそのままでタグだけ替える", () => {
+    expect(amazonLink("https://www.amazon.co.jp/s?k=desk&tag=creator-22&linkId=x", "specify-22")).toBe(
+      "https://www.amazon.co.jp/s?k=desk&tag=specify-22",
+    )
+  })
+
+  it("Amazon 以外と、タグが設定されていないときは null", () => {
+    expect(amazonLink("https://item.rakuten.co.jp/shop/desk/", "specify-22")).toBeNull()
+    expect(amazonLink("https://www.amazon.co.jp/dp/B0ABCDE123", undefined)).toBeNull()
+    expect(amazonLink("https://www.amazon.co.jp/dp/B0ABCDE123", "")).toBeNull()
+  })
+})
 
 type Route = { status: number; location?: string; html?: string }
 
@@ -25,8 +49,23 @@ describe("resolveProduct", () => {
     })
     expect(await resolveProduct("https://a.r10.to/abc", fetch)).toEqual({
       host: "item.rakuten.co.jp",
+      url: "https://item.rakuten.co.jp/shop/desk/",
       title: "白いデスク&収納",
       image: "https://shop.r10s.jp/desk.jpg",
+    })
+  })
+
+  it("店の中でさらに転送されても、最初にたどり着いた商品の URL を返す", async () => {
+    const fetch = fakeFetch({
+      "https://amzn.to/abc": { status: 301, location: "https://www.amazon.co.jp/dp/B0ABCDE123?tag=creator-22" },
+      "https://www.amazon.co.jp/dp/B0ABCDE123?tag=creator-22": { status: 302, location: "https://www.amazon.co.jp/errors/validateCaptcha" },
+      "https://www.amazon.co.jp/errors/validateCaptcha": { status: 200, html: '<meta property="og:title" content="Amazon">' },
+    })
+    expect(await resolveProduct("https://amzn.to/abc", fetch)).toEqual({
+      host: "www.amazon.co.jp",
+      url: "https://www.amazon.co.jp/dp/B0ABCDE123?tag=creator-22",
+      title: null,
+      image: null,
     })
   })
 

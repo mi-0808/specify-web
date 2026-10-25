@@ -26,3 +26,18 @@ const REDIRECT_HOSTS = new Set([
 export const isShopHost = (host: string) => host in SHOP_HOSTS
 export const isAllowedHost = (host: string) => isShopHost(host) || REDIRECT_HOSTS.has(host)
 export const shopName = (host: string) => SHOP_HOSTS[host] ?? host
+
+const ASIN = /\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})(?=[/?]|$)/i
+
+// Amazon の店のページを、Specify のトラッキングID付きのリンクにする（クリエイターのタグは外す。2026-10-25 決定）
+// Amazon 以外と、タグが設定されていないときは null（説明欄のリンクをそのまま使う）
+export function amazonLink(url: string, tag: string | undefined): string | null {
+  const u = new URL(url)
+  if (!tag || shopName(u.hostname) !== "Amazon") return null
+  const asin = u.pathname.match(ASIN)?.[1]
+  if (asin) return `https://www.amazon.co.jp/dp/${asin}?tag=${encodeURIComponent(tag)}`
+  // 商品ページ以外（検索・ほしい物リストなど）は、行き先はそのままでタグだけ替える
+  for (const key of ["linkCode", "linkId", "ascsubtag"]) u.searchParams.delete(key)
+  u.searchParams.set("tag", tag)
+  return u.href
+}

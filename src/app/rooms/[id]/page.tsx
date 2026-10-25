@@ -94,7 +94,11 @@ export default async function RoomPage({ params }: Props) {
 
         <section className="space-y-4">
           <div className="space-y-1">
-            <h2 className="text-[1.25rem] font-semibold">この部屋の家具（{room.room_items.length}点）</h2>
+            {/* ステマ規制（景品表示法）：広告だとリンクの近くで分かるように、見出しに PR を付ける */}
+            <h2 className="flex items-center gap-2 text-[1.25rem] font-semibold">
+              <span className="rounded-full bg-surface-container-high px-2 py-0.5 text-[0.75rem] font-semibold text-on-surface-variant">PR</span>
+              この部屋の家具（{room.room_items.length}点）
+            </h2>
             <p className="text-[0.8125rem] leading-[1.6] text-on-surface-variant">
               動画の説明欄で紹介されているアイテムです。リンク先は、クリエイターが紹介しているページです。
             </p>
@@ -131,6 +135,7 @@ export default async function RoomPage({ params }: Props) {
               </li>
             ))}
           </ul>
+          <p className="text-[0.8125rem] leading-[1.6] text-on-surface-variant">リンクには、広告（アフィリエイトリンク）が含まれます。</p>
         </section>
       </div>
     </main>

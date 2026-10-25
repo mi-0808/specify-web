@@ -74,7 +74,7 @@ export function FilterChips({ chips, trailing }: { chips: Chip[]; trailing?: Rea
               href={c.href}
               onClick={() => setTapped(c)}
               aria-current={active ? "page" : undefined}
-              className={`focus-ring inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[0.875rem] font-medium md:px-4 md:text-[0.9375rem] ${
+              className={`focus-ring inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-base font-medium md:px-4 md:text-[0.9375rem] ${
                 active
                   ? "bg-secondary-container text-on-secondary-container"
                   : "border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low"
@@ -96,7 +96,7 @@ export function FilterChips({ chips, trailing }: { chips: Chip[]; trailing?: Rea
               setLimit(null)
             }}
             aria-expanded={expanded}
-            className="focus-ring inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-2 text-[0.875rem] font-medium text-primary md:hidden"
+            className="focus-ring inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-1 text-base font-medium text-primary md:hidden"
           >
             {expanded ? "閉じる ▴" : "もっと見る ▾"}
           </button>

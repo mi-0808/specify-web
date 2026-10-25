@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
 import { hashText, isInteriorVideo, parseItems } from "./parse"
 import { resolveProduct } from "./resolve"
-import { amazonLink, SHOP_HOSTS } from "./shops"
+import { amazonLink, rakutenLink, SHOP_HOSTS } from "./shops"
 import { getVideos, type Video } from "./youtube"
 
 const MIN_ITEMS = 3 // 買える家具がこれ未満の動画は出さない
@@ -123,14 +123,20 @@ async function resolveItems(description: string) {
   const links = parseItems(description)
     .filter(({ url }) => !seen.has(url) && seen.add(url))
     .slice(0, MAX_LINKS)
-  const products = await mapLimit(links, 4, (l) => resolveProduct(l.url))
+  // ponytail: リンクは読み直したときに替わる。タグや ID を変えたら、説明欄が変わっていない部屋は古いリンクのまま（全部読み直す処理が要る）
+  const products = await mapLimit(links, 4, async (l) => {
+    const p = await resolveProduct(l.url)
+    if (!p) return null
+    // 楽天市場の商品と、楽天ROOM の投稿が紹介している楽天市場の商品は、Specify の楽天アフィリエイトのリンクにする
+    const rakuten = rakutenLink(p.item ?? p.url, process.env.RAKUTEN_AFFILIATE_ID)
+    if (rakuten) return { ...p, host: "item.rakuten.co.jp", url: rakuten }
+    return { ...p, url: amazonLink(p.url, process.env.AMAZON_ASSOCIATE_TAG) ?? l.url }
+  })
   return links.flatMap((l, i) => {
     const p = products[i]
     // 「Amazon」「楽天」のような店名だけのラベルで商品名も取れないものは、何の家具か分からないので出さない
     if (!p || (!p.title && GENERIC_LABELS.has(l.label))) return []
-    // ponytail: タグは読み直したときに付く。タグを変えたら、説明欄が変わっていない部屋は古いリンクのまま（全部読み直す処理が要る）
-    const url = amazonLink(p.url, process.env.AMAZON_ASSOCIATE_TAG) ?? l.url
-    return [{ label: l.label, url, shop_host: p.host, product_title: p.title, image_url: p.image }]
+    return [{ label: l.label, url: p.url, shop_host: p.host, product_title: p.title, image_url: p.image }]
   })
 }
 

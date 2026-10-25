@@ -139,7 +139,8 @@ Vercel Cron（1日1回、日本時間 3:00）
 - 取れなかったときは、説明欄のラベルと店の名前だけで表示する。Amazon はロボットに汎用ページしか返さないので、今は商品名・写真が取れない（段階2で、Amazon のアフィリエイト API を使って取る）。
 - 楽天の商品名は、先頭の宣伝（【ポイント5倍】＼激安！／[セール…] など）と末尾のショップ名を外して保存する。
 - 商品写真は店が共有用に出している画像（og:image）を、そのまま表示する（こちらには保存しない）。
-- Amazon のリンクは、最初にたどり着いた Amazon のページから商品番号（ASIN）を取り、`https://www.amazon.co.jp/dp/{ASIN}?tag={AMAZON_ASSOCIATE_TAG}` に替えて保存する。クリエイターのタグは外す。商品ページ以外（検索など）は、行き先はそのままでタグだけ替える。`AMAZON_ASSOCIATE_TAG` が空なら説明欄のリンクのまま。楽天などは説明欄のリンクのまま。
+- Amazon のリンクは、最初にたどり着いた Amazon のページから商品番号（ASIN）を取り、`https://www.amazon.co.jp/dp/{ASIN}?tag={AMAZON_ASSOCIATE_TAG}` に替えて保存する。クリエイターのタグは外す。商品ページ以外（検索など）は、行き先はそのままでタグだけ替える。`AMAZON_ASSOCIATE_TAG` が空なら説明欄のリンクのまま。
+- 楽天市場のリンクは、たどり着いた `item.rakuten.co.jp/{店}/{商品}` を `https://hb.afl.rakuten.co.jp/hgc/{RAKUTEN_AFFILIATE_ID}/?pc={商品の URL}`（楽天ROOM も使っている楽天公式の形）に替えて保存する（2026-10-25 決定）。楽天ROOM の投稿（`/room_○○/数字`）は、ページの中の `hb.afl.rakuten.co.jp/hgc/…/_RTroom…_pc?pc=` のうち `rp_`（関連商品）の付かないものから元の商品を取り出し、楽天市場として同じように替える。楽天の商品検索APIは、商品を引くのに商品ページの中の数字のIDが要るため使わない。`RAKUTEN_AFFILIATE_ID` が空なら説明欄のリンクのまま。ほかの店は説明欄のリンクのまま。
 
 ---
 
@@ -157,7 +158,7 @@ room_items(
   room_id text references rooms on delete cascade,
   position int,                 -- 説明欄での順番
   label text,                   -- 説明欄のラベル（「デスク」）
-  url text,                     -- 家具のリンク（Amazon は Specify のタグ付き、ほかはクリエイターのリンクのまま。5章）
+  url text,                     -- 家具のリンク（Amazon・楽天は Specify のタグ付き、ほかはクリエイターのリンクのまま。5章）
   shop_host text,               -- 最後にたどり着いた店のホスト
   product_title text, image_url text,   -- 商品ページから取れたもの（なければ null）
   primary key (room_id, position)

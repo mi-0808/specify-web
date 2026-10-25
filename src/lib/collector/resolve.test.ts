@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { resolveProduct } from "./resolve"
-import { amazonLink } from "./shops"
+import { amazonLink, rakutenLink } from "./shops"
 
 describe("amazonLink", () => {
   it("Amazon の商品ページは、クリエイターのタグを外して Specify のタグだけの短いリンクにする", () => {
@@ -37,7 +37,40 @@ const fakeFetch = (routes: Record<string, Route>) =>
     })
   }) as unknown as typeof fetch
 
+describe("rakutenLink", () => {
+  it("楽天市場の商品を、Specify のアフィリエイトIDのリンクにする（クリエイターの付けた値は外す）", () => {
+    expect(rakutenLink("https://item.rakuten.co.jp/roomware/mirror-55/?scid=af_pc_etc&sc2id=af_101", "aff.id")).toBe(
+      "https://hb.afl.rakuten.co.jp/hgc/aff.id/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Froomware%2Fmirror-55%2F",
+    )
+  })
+
+  it("楽天市場の商品ページ以外と、ID がないときは null（説明欄のリンクのまま）", () => {
+    expect(rakutenLink("https://www.amazon.co.jp/dp/B0ABCDE123", "aff.id")).toBeNull()
+    expect(rakutenLink("https://item.rakuten.co.jp/roomware/", "aff.id")).toBeNull()
+    expect(rakutenLink("https://item.rakuten.co.jp/roomware/mirror-55/", undefined)).toBeNull()
+    expect(rakutenLink("https://item.rakuten.co.jp/roomware/mirror-55/", "")).toBeNull()
+  })
+})
+
 describe("resolveProduct", () => {
+  it("楽天ROOM の投稿から、紹介している楽天市場の商品を取り出す（関連商品の rp_ は外す）", async () => {
+    const afl = (rp: string, item: string) =>
+      `<a href="https://hb.afl.rakuten.co.jp/hgc/2e16.ca87/_RTroom0341${rp}_2468_pc?pc=https%3A%2F%2Fitem.rakuten.co.jp%2F${item}%2F%3Fscid%3Droom_pc&amp;m=x">`
+    const fetch = fakeFetch({
+      "https://room.rakuten.co.jp/room_61a0/1700246814832201": {
+        status: 200,
+        html: `<meta property="og:title" content="＼P10倍／【公式】全身鏡 スタンドミラー"><meta property="og:image" content="https://room.r10s.jp/mirror.jpg">${afl("rp", "other%2Frelated")}${afl("", "roomware%2Fmirror-55")}${afl("rp", "x%2Fy")}`,
+      },
+    })
+    expect(await resolveProduct("https://room.rakuten.co.jp/room_61a0/1700246814832201", fetch)).toEqual({
+      host: "room.rakuten.co.jp",
+      url: "https://room.rakuten.co.jp/room_61a0/1700246814832201",
+      title: "全身鏡 スタンドミラー",
+      image: "https://room.r10s.jp/mirror.jpg",
+      item: "https://item.rakuten.co.jp/roomware/mirror-55/",
+    })
+  })
+
   it("短縮URL → アフィリエイト → 商品ページとたどり、名前と写真を取る", async () => {
     const fetch = fakeFetch({
       "https://a.r10.to/abc": { status: 301, location: "https://hb.afl.rakuten.co.jp/ichiba/x" },

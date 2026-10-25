@@ -14,6 +14,7 @@ function rowTops(ul: HTMLUListElement) {
 }
 
 // 押した瞬間に選択の色を切り替える（サーバーの返事を待つと、押してから色が変わるまでラグが出る）
+// チップの高さはタップできる範囲の最小値 44px（docs/design-guidelines.md）
 // スマホは3行まで出して、残りは「もっと見る」で開く。パソコンは全部折り返して並べる
 export function FilterChips({ chips, trailing }: { chips: Chip[]; trailing?: ReactNode }) {
   const [tapped, setTapped] = useState<Chip | null>(null)
@@ -62,8 +63,8 @@ export function FilterChips({ chips, trailing }: { chips: Chip[]; trailing?: Rea
   const shown = collapsed ? chips.slice(0, limit) : chips
 
   return (
-    // 測り終わるまでは CSS で3行分の高さに切っておく（読み込み直後に全部が一瞬見えないように）
-    <ul ref={ref} className={`flex flex-wrap gap-2 ${expanded ? "" : "max-h-[7rem] overflow-hidden md:max-h-none"}`}>
+    // 測り終わるまでは CSS で3行分（44px×3＋すき間8px×2）の高さに切っておく（読み込み直後に全部が一瞬見えないように）
+    <ul ref={ref} className={`flex flex-wrap gap-2 ${expanded ? "" : "max-h-[9.25rem] overflow-hidden md:max-h-none"}`}>
       {shown.map((c) => {
         // 選択中のチップをもう一度押すと解除（「すべて」は押しても選択のまま）
         const active = tapped ? c.key === tapped.key && (!tapped.active || tapped.key === "all") : c.active
@@ -73,7 +74,7 @@ export function FilterChips({ chips, trailing }: { chips: Chip[]; trailing?: Rea
               href={c.href}
               onClick={() => setTapped(c)}
               aria-current={active ? "page" : undefined}
-              className={`focus-ring inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[0.8125rem] font-medium md:min-h-11 md:px-4 md:text-[0.9375rem] ${
+              className={`focus-ring inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[0.875rem] font-medium md:px-4 md:text-[0.9375rem] ${
                 active
                   ? "bg-secondary-container text-on-secondary-container"
                   : "border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low"
@@ -95,7 +96,7 @@ export function FilterChips({ chips, trailing }: { chips: Chip[]; trailing?: Rea
               setLimit(null)
             }}
             aria-expanded={expanded}
-            className="focus-ring inline-flex min-h-8 items-center whitespace-nowrap rounded-full px-2 text-[0.8125rem] font-medium text-primary md:hidden"
+            className="focus-ring inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-2 text-[0.875rem] font-medium text-primary md:hidden"
           >
             {expanded ? "閉じる ▴" : "もっと見る ▾"}
           </button>

@@ -30,8 +30,11 @@ export function LargeTitle({
   return (
     <>
       <div ref={ref} className={`space-y-1 pt-[env(safe-area-inset-top)] ${alsoDesktop ? "" : "md:hidden"}`}>
-        {brand && <p className="flex items-center gap-1.5 text-[0.8125rem] font-bold tracking-tight"><img src="/icon.svg" alt="" className="size-5" />Specify</p>}
-        <h1 className="text-[2.125rem] font-bold leading-[1.2] tracking-tight md:text-[1.75rem]">{title}</h1>
+        {/* brand は見出しと同じ行の右に置いて、タイムラインを上に寄せる */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-[2.125rem] font-bold leading-[1.2] tracking-tight md:text-[1.75rem]">{title}</h1>
+          {brand && <p className="flex items-center gap-1.5 text-[0.8125rem] font-bold tracking-tight"><img src="/icon.svg" alt="" className="size-5" />Specify</p>}
+        </div>
         {subtitle && <p className="text-[0.9375rem] leading-[1.6] text-on-surface-variant">{subtitle}</p>}
       </div>
       <div

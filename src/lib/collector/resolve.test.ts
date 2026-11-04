@@ -135,4 +135,25 @@ describe("resolveProduct", () => {
     const fetch = fakeFetch({ "https://amzn.to/abc": { status: 404 } })
     expect(await resolveProduct("https://amzn.to/abc", fetch)).toBeNull()
   })
+
+  it("販売終了で消えた商品ページ（404）は出さない", async () => {
+    const fetch = fakeFetch({ "https://www.amazon.co.jp/dp/B074XYJHJF": { status: 404 } })
+    expect(await resolveProduct("https://www.amazon.co.jp/dp/B074XYJHJF", fetch)).toBeNull()
+  })
+
+  it("Amazon が消えた商品に返す 500 も出さない（Amazon の一時的な 503 と、ほかの店の 500 は名前と写真なしで出す）", async () => {
+    const fetch = fakeFetch({
+      "https://www.amazon.co.jp/dp/B086YZGCX2": { status: 500 },
+      "https://www.amazon.co.jp/dp/B07KM8RD34": { status: 503 },
+      "https://item.rakuten.co.jp/shop/desk/": { status: 500 },
+    })
+    expect(await resolveProduct("https://www.amazon.co.jp/dp/B086YZGCX2", fetch)).toBeNull()
+    expect(await resolveProduct("https://www.amazon.co.jp/dp/B07KM8RD34", fetch)).toMatchObject({ title: null, image: null })
+    expect(await resolveProduct("https://item.rakuten.co.jp/shop/desk/", fetch)).toEqual({
+      host: "item.rakuten.co.jp",
+      url: "https://item.rakuten.co.jp/shop/desk/",
+      title: null,
+      image: null,
+    })
+  })
 })

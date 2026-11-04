@@ -34,11 +34,11 @@ export function TabBar() {
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
-                className={`focus-ring flex min-h-14 min-w-16 flex-col items-center justify-center gap-0.5 rounded-xl px-3 pt-1.5 text-[0.6875rem] font-medium ${
+                className={`focus-ring flex min-h-12 min-w-16 flex-col items-center justify-center gap-0.5 rounded-xl px-3 pt-1 text-[0.625rem] font-medium ${
                   active ? "tab-lit text-primary" : "text-on-surface-variant"
                 }`}
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-6" fill={active && t.icon === "bookmark" ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill={active && t.icon === "bookmark" ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                   {ICONS[t.icon]}
                 </svg>
                 {t.label}

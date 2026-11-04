@@ -59,7 +59,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-5 pb-8 pt-4 md:gap-8 md:pt-8">
         <SiteHeader current="discover" />
         {/* スマホは最初の画面でタイムラインを多く見せたいので、サブタイトルは出さない */}
-        <LargeTitle brand title="さがす" />
+        <LargeTitle title="さがす" />
         {/* パソコンは今の見出しのまま */}
         <section className="hidden space-y-3 md:block">
           <h1 className="text-[1.75rem] font-bold leading-[1.4]">見つけた部屋の家具を、そのまま探せる。</h1>

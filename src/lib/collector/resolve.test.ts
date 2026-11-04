@@ -141,17 +141,11 @@ describe("resolveProduct", () => {
     expect(await resolveProduct("https://www.amazon.co.jp/dp/B074XYJHJF", fetch)).toBeNull()
   })
 
-  it("Amazon が消えた商品に返す 500 も出さない（Amazon の一時的な 503 と、ほかの店の 500 は名前と写真なしで出す）", async () => {
-    const fetch = fakeFetch({
-      "https://www.amazon.co.jp/dp/B086YZGCX2": { status: 500 },
-      "https://www.amazon.co.jp/dp/B07KM8RD34": { status: 503 },
-      "https://item.rakuten.co.jp/shop/desk/": { status: 500 },
-    })
-    expect(await resolveProduct("https://www.amazon.co.jp/dp/B086YZGCX2", fetch)).toBeNull()
-    expect(await resolveProduct("https://www.amazon.co.jp/dp/B07KM8RD34", fetch)).toMatchObject({ title: null, image: null })
-    expect(await resolveProduct("https://item.rakuten.co.jp/shop/desk/", fetch)).toEqual({
-      host: "item.rakuten.co.jp",
-      url: "https://item.rakuten.co.jp/shop/desk/",
+  it("Amazon がロボットに返す 500 では消さない（販売中の商品にも返すため）。名前と写真なしで出す", async () => {
+    const fetch = fakeFetch({ "https://www.amazon.co.jp/dp/B09NM5YRK8": { status: 500 } })
+    expect(await resolveProduct("https://www.amazon.co.jp/dp/B09NM5YRK8", fetch)).toEqual({
+      host: "www.amazon.co.jp",
+      url: "https://www.amazon.co.jp/dp/B09NM5YRK8",
       title: null,
       image: null,
     })

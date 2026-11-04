@@ -34,35 +34,35 @@
   --inverse-primary: #FFB596;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary: #FFB596;
-    --on-primary: #581E00;
-    --primary-hover: #FFDBCD;
-    --primary-container: #7D2D00;
-    --on-primary-container: #FFDBCD;
-    --secondary-container: #6D3C26;
-    --on-secondary-container: #EDA88B;
-    --tertiary-container: #274E3D;
-    --on-tertiary-container: #C1ECD5;
-    --surface: #16130B;
-    --on-surface: #E9E2D4;
-    --on-surface-variant: #DDC1AE;
-    --surface-container-lowest: #110E07;
-    --surface-container-low: #1E1B13;
-    --surface-container: #221F17;
-    --surface-container-high: #2D2A21;
-    --surface-container-highest: #38342B;
-    --outline: #A48C7B;
-    --outline-variant: #564334;
-    --error: #FFB4AB;
-    --on-error: #690004;
-    --error-container: #930009;
-    --on-error-container: #FFDAD5;
-    --inverse-surface: #F3DED7;
+/* ダークの色。自動・ライト・ダークは layout.tsx の小さなスクリプトが <html data-theme> に決める */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --primary: #FFB596;
+  --on-primary: #581E00;
+  --primary-hover: #FFDBCD;
+  --primary-container: #7D2D00;
+  --on-primary-container: #FFDBCD;
+  --secondary-container: #6D3C26;
+  --on-secondary-container: #EDA88B;
+  --tertiary-container: #274E3D;
+  --on-tertiary-container: #C1ECD5;
+  --surface: #16130B;
+  --on-surface: #E9E2D4;
+  --on-surface-variant: #DDC1AE;
+  --surface-container-lowest: #110E07;
+  --surface-container-low: #1E1B13;
+  --surface-container: #221F17;
+  --surface-container-high: #2D2A21;
+  --surface-container-highest: #38342B;
+  --outline: #A48C7B;
+  --outline-variant: #564334;
+  --error: #FFB4AB;
+  --on-error: #690004;
+  --error-container: #930009;
+  --on-error-container: #FFDAD5;
+  --inverse-surface: #F3DED7;
     --inverse-on-surface: #3A2E29;
     --inverse-primary: #A14007;
-  }
 }
 
 @theme inline {
@@ -161,7 +161,7 @@ button:not(:disabled):active {
 /* Apple らしさ（docs/design-guidelines.md）：やわらかい影 */
 @utility soft-card {
   box-shadow: 0 1px 2px rgb(47 40 35 / 0.06), 0 6px 20px rgb(47 40 35 / 0.06);
-  @media (prefers-color-scheme: dark) {
+  :root[data-theme="dark"] & {
     box-shadow: 0 0 0 1px var(--outline-variant);
   }
 }
@@ -169,7 +169,7 @@ button:not(:disabled):active {
 /* 下メニューの選択中タブ：大きさも位置も変えず、アイコンと文字に上からうっすら光を当てるだけ */
 @utility tab-lit {
   filter: drop-shadow(0 -0.5px 0 rgb(255 255 255 / 0.7)) drop-shadow(0 3px 3px rgb(184 80 26 / 0.18));
-  @media (prefers-color-scheme: dark) {
+  :root[data-theme="dark"] & {
     filter: drop-shadow(0 -0.5px 0 rgb(255 255 255 / 0.15)) drop-shadow(0 3px 4px rgb(255 181 150 / 0.18));
   }
 }

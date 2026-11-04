@@ -15,6 +15,9 @@ const cleanLabel = (s: string) => {
 export function parseItems(description: string): { label: string; url: string }[] {
   const items: { label: string; url: string }[] = []
   let pending: string | null = null
+  // 「・ソファー(無印良品)」→ 説明文 → 空行 → URL のように、商品名と URL が離れている書き方のために、
+  // 最後の「・」の行を空行をまたいで覚えておく。URL を1つ読むか、見出しが来たら忘れる
+  let bullet: string | null = null
 
   for (const raw of description.split(/\r?\n/)) {
     const line = raw.trim()
@@ -24,12 +27,15 @@ export function parseItems(description: string): { label: string; url: string }[
     }
     const match = line.match(URL_RE)
     if (!match) {
-      // 見出し（●）やハッシュタグの行は、次の URL のラベルにしない
+      // 見出し（●）やハッシュタグの行は、次の URL のラベルにしない。【】の行は次の行の URL のラベルにはする
       pending = /^[●#＃]/.test(line) ? null : cleanLabel(line)
+      if (/^[●#＃【]/.test(line)) bullet = null
+      else if (/^[・•]/.test(line)) bullet = pending
       continue
     }
-    const label = cleanLabel(line.slice(0, match.index)) || pending
+    const label = cleanLabel(line.slice(0, match.index)) || pending || bullet
     pending = null
+    bullet = null
     const url = match[0].replace(/[)）」』】>]+$/, "")
     if (label && label.length <= MAX_LABEL && !label.includes("。") && !SKIP_RE.test(label)) items.push({ label, url })
   }

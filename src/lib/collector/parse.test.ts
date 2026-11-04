@@ -41,6 +41,13 @@ describe("parseItems", () => {
     ])
   })
 
+  it("「▶︎URL」のように記号だけの前置きなら、前の行をラベルにする", () => {
+    expect(parseItems("LG 27インチ4Kモニター\n▶︎https://amzn.to/eeee\n\n無印良品のベンチ\n👉 https://amzn.to/ffff")).toEqual([
+      { label: "LG 27インチ4Kモニター", url: "https://amzn.to/eeee" },
+      { label: "無印良品のベンチ", url: "https://amzn.to/ffff" },
+    ])
+  })
+
   it("長すぎる文はラベルにしない", () => {
     expect(parseItems("何か皆様の家具やインテリア探しのお役に立てたら嬉しいですというとても長い文章です\nhttps://a.r10.to/x")).toEqual([])
   })

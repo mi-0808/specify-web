@@ -6,8 +6,11 @@ const TIME_RE = /^\d{1,2}:\d{2}(?::\d{2})?\s*/
 const SKIP_RE = /まとめ|こちら|チャンネル|登録|BGM|music|instagram|インスタ|twitter|tiktok|お問い?合わせ|お問合せ/i
 const MAX_LABEL = 30
 
-const cleanLabel = (s: string) =>
-  s.replace(TIME_RE, "").replace(/[：:\s　]+$/, "").replace(/^[・\-–—\s　]+/, "").trim()
+// 「▶︎https://…」の「▶︎」のように文字も数字もないものはラベルにせず、前の行の商品名を使う
+const cleanLabel = (s: string) => {
+  const label = s.replace(TIME_RE, "").replace(/[：:\s　]+$/, "").replace(/^[・\-–—\s　]+/, "").trim()
+  return /[\p{L}\p{N}]/u.test(label) ? label : ""
+}
 
 export function parseItems(description: string): { label: string; url: string }[] {
   const items: { label: string; url: string }[] = []

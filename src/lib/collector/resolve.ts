@@ -1,4 +1,4 @@
-import { isAllowedHost, isShopHost } from "./shops"
+import { isAllowedHost, isShopHost, shopName } from "./shops"
 
 // url は最初にたどり着いた店のページ（店の中でさらに転送されても、商品の URL を残すため）
 // item は楽天ROOM の投稿が紹介している楽天市場の商品ページ
@@ -38,6 +38,11 @@ export async function resolveProduct(url: string, fetchImpl: typeof fetch = fetc
       continue
     }
     if (!isShopHost(current.hostname)) return null
+    // 販売終了などで消えた商品ページは出さない。Amazon は消えた商品に 500 を返すことがある（販売中は 200）
+    // 503 はアクセスが多いときの一時的な断りなので消さない
+    // ponytail: Amazon の一時的な 500 でも消える。概要欄が変わるまで戻らないので、誤って消えるのが目立つなら取り直しを足す
+    if (res?.status === 404 || res?.status === 410) return null
+    if (res?.status === 500 && shopName(current.hostname) === "Amazon") return null
 
     // 取れなくても、店のページだと分かっていれば名前と写真なしで出す
     const html = res?.ok ? await readHead(res).catch(() => "") : ""

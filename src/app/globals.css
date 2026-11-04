@@ -166,14 +166,6 @@ button:not(:disabled):active {
   }
 }
 
-/* 下メニューの選択中タブ：大きさも位置も変えず、アイコンと文字に上からうっすら光を当てるだけ */
-@utility tab-lit {
-  filter: drop-shadow(0 -0.5px 0 rgb(255 255 255 / 0.7)) drop-shadow(0 3px 3px rgb(184 80 26 / 0.18));
-  :root[data-theme="dark"] & {
-    filter: drop-shadow(0 -0.5px 0 rgb(255 255 255 / 0.15)) drop-shadow(0 3px 4px rgb(255 181 150 / 0.18));
-  }
-}
-
 @utility glass {
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   /* 接頭辞なしの1行だけ書く（-webkit- も並べると、ビルドで -webkit- 1行にまとめられて Chrome で消える） */

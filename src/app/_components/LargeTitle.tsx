@@ -4,17 +4,14 @@ import { useEffect, useRef, useState } from "react"
 
 // iPhone アプリのような大きな見出し。スクロールして見出しが隠れたら、上にすりガラスの小さな見出しを出す（スマホだけ）
 // alsoDesktop: パソコンでも同じ見出しを出す（さがすは、パソコンでは今の見出しのままにするので false）
-// brand: 見出しの上に小さくアプリ名を出す（スマホは上のヘッダーがないので）
 export function LargeTitle({
   title,
   subtitle,
   alsoDesktop = false,
-  brand = false,
 }: {
   title: string
   subtitle?: string
   alsoDesktop?: boolean
-  brand?: boolean
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [compact, setCompact] = useState(false)
@@ -30,11 +27,7 @@ export function LargeTitle({
   return (
     <>
       <div ref={ref} className={`space-y-1 pt-[env(safe-area-inset-top)] ${alsoDesktop ? "" : "md:hidden"}`}>
-        {/* brand は見出しと同じ行の右に置いて、タイムラインを上に寄せる */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-[2.125rem] font-bold leading-[1.2] tracking-tight md:text-[1.75rem]">{title}</h1>
-          {brand && <p className="flex items-center gap-1.5 text-[0.8125rem] font-bold tracking-tight"><img src="/icon.svg" alt="" className="size-5" />Specify</p>}
-        </div>
+        <h1 className="text-[2.125rem] font-bold leading-[1.2] tracking-tight md:text-[1.75rem]">{title}</h1>
         {subtitle && <p className="text-[0.9375rem] leading-[1.6] text-on-surface-variant">{subtitle}</p>}
       </div>
       <div

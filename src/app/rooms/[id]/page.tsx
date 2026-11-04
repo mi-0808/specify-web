@@ -157,15 +157,12 @@ export default async function RoomPage({ params }: Props) {
                 </div>
               </li>
             ))}
+            {/* 開いたら横いっぱいに広げて、入力欄を出す */}
+            <li className="sm:has-[details[open]]:col-span-2">
+              <ItemAdd roomId={room.id} shops={[...new Set(Object.values(SHOP_HOSTS))]} loggedIn={!!user} />
+            </li>
           </ul>
           <p className="text-[0.8125rem] leading-[1.6] text-on-surface-variant">リンクには、広告（アフィリエイトリンク）が含まれます。</p>
-          {user ? (
-            <ItemAdd roomId={room.id} shops={[...new Set(Object.values(SHOP_HOSTS))]} />
-          ) : (
-            <Link href={`/login?next=/rooms/${room.id}`} className="focus-ring inline-block rounded text-[0.9375rem] text-primary underline underline-offset-4">
-              ログインして商品を追加
-            </Link>
-          )}
         </section>
       </div>
     </main>

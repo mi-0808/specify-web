@@ -86,6 +86,8 @@ export interface Database {
           shop_host: string;
           product_title: string | null;
           image_url: string | null;
+          source: "description" | "manual";
+          added_by: string | null;
         };
         Insert: {
           room_id: string;
@@ -95,6 +97,8 @@ export interface Database {
           shop_host: string;
           product_title?: string | null;
           image_url?: string | null;
+          source?: "description" | "manual";
+          added_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["room_items"]["Insert"]>;
         Relationships: [

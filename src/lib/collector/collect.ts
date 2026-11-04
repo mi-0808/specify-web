@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/database"
 import { hashText, parseItems } from "./parse"
-import { resolveProduct } from "./resolve"
-import { amazonLink, rakutenLink, SHOP_HOSTS } from "./shops"
+import { resolveProduct, type Product } from "./resolve"
+import { amazonLink, isAllowedHost, rakutenLink, SHOP_HOSTS, shopName } from "./shops"
 import { getVideos, type Video } from "./youtube"
 
 const MAX_LINKS = 30 // 1本の説明欄から取りに行く URL の上限
@@ -85,7 +85,8 @@ export async function saveRoom(db: Db, v: Video, items: Item[], genreId: string 
   // 家具を入れ終わるまでは hash を空にしておき、途中で失敗しても次回に読み直されるようにする
   const { error: upsertError } = await db.from("rooms").upsert(toRoom(v, "", genreId))
   if (upsertError) throw upsertError
-  const { error: deleteError } = await db.from("room_items").delete().eq("room_id", v.id)
+  // 入れ直すのは説明欄の家具だけ。部屋ページで人が足した家具（manual）は残す
+  const { error: deleteError } = await db.from("room_items").delete().eq("room_id", v.id).eq("source", "description")
   if (deleteError) throw deleteError
   if (items.length) {
     const { error: insertError } = await db
@@ -118,11 +119,7 @@ async function resolveItems(description: string) {
   // ponytail: リンクは読み直したときに替わる。タグや ID を変えたら、説明欄が変わっていない部屋は古いリンクのまま（全部読み直す処理が要る）
   const products = await mapLimit(links, 4, async (l) => {
     const p = await resolveProduct(l.url)
-    if (!p) return null
-    // 楽天市場の商品と、楽天ROOM の投稿が紹介している楽天市場の商品は、Specify の楽天アフィリエイトのリンクにする
-    const rakuten = rakutenLink(p.item ?? p.url, process.env.RAKUTEN_AFFILIATE_ID)
-    if (rakuten) return { ...p, host: "item.rakuten.co.jp", url: rakuten }
-    return { ...p, url: amazonLink(p.url, process.env.AMAZON_ASSOCIATE_TAG) ?? l.url }
+    return p && withAffiliate(p, l.url)
   })
   return links.flatMap((l, i) => {
     const p = products[i]
@@ -130,6 +127,37 @@ async function resolveItems(description: string) {
     if (!p || (!p.title && GENERIC_LABELS.has(l.label))) return []
     return [{ label: l.label, url: p.url, shop_host: p.host, product_title: p.title, image_url: p.image }]
   })
+}
+
+// 楽天市場の商品と、楽天ROOM の投稿が紹介している楽天市場の商品は、Specify の楽天アフィリエイトのリンクにする
+// Amazon は Specify のトラッキングID付きに替える。それ以外の店は、貼られた・説明欄のリンクのまま
+function withAffiliate(p: Product, original: string): Product {
+  const rakuten = rakutenLink(p.item ?? p.url, process.env.RAKUTEN_AFFILIATE_ID)
+  if (rakuten) return { ...p, host: "item.rakuten.co.jp", url: rakuten }
+  return { ...p, url: amazonLink(p.url, process.env.AMAZON_ASSOCIATE_TAG) ?? original }
+}
+
+export const MAX_LABEL = 40
+
+export type ManualItemResult =
+  | { ok: true; item: Item }
+  | { ok: false; reason: "not-shop" | "not-found" }
+
+// 部屋ページで貼られた商品の URL を、説明欄のリンクと同じ処理（許可リスト・404/410・アフィリエイト）に通す
+// ラベルが空なら、取れた商品名（取れなければ店の名前）を使う
+export async function resolveManualItem(url: string, label: string, fetchImpl: typeof fetch = fetch): Promise<ManualItemResult> {
+  let u: URL
+  try {
+    u = new URL(url.trim())
+  } catch {
+    return { ok: false, reason: "not-shop" }
+  }
+  if (u.protocol !== "https:" || !isAllowedHost(u.hostname)) return { ok: false, reason: "not-shop" }
+  const resolved = await resolveProduct(u.href, fetchImpl)
+  if (!resolved) return { ok: false, reason: "not-found" }
+  const p = withAffiliate(resolved, u.href)
+  const name = label.trim().slice(0, MAX_LABEL) || p.title?.slice(0, MAX_LABEL).trim() || shopName(p.host)
+  return { ok: true, item: { label: name, url: p.url, shop_host: p.host, product_title: p.title, image_url: p.image } }
 }
 
 async function mapLimit<T, R>(xs: T[], limit: number, f: (x: T) => Promise<R>): Promise<R[]> {

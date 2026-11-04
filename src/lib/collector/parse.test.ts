@@ -48,6 +48,32 @@ describe("parseItems", () => {
     ])
   })
 
+  it("「・商品名」→ 説明文 → 空行 → URL の書き方でも、「・」の行をラベルにする", () => {
+    const text = `【Q.オススメのアイテム】
+
+・ソファー(無印良品)
+
+ソファーの背面がすごく可愛くて2シーターでも存在感があります
+
+https://www.muji.com/jp/ja/store/cmdty/detail/4550512396741
+
+・マグネットタブレットホルダー(山崎実業)
+
+疲れている時のゆったりとしたお風呂時間を助けてくれるアイテムです
+
+https://www.amazon.co.jp/dp/B09GJMNC6X
+
+・お気に入りのラグ
+
+【YouTube】
+
+https://www.youtube.com/@someone`
+    expect(parseItems(text)).toEqual([
+      { label: "ソファー(無印良品)", url: "https://www.muji.com/jp/ja/store/cmdty/detail/4550512396741" },
+      { label: "マグネットタブレットホルダー(山崎実業)", url: "https://www.amazon.co.jp/dp/B09GJMNC6X" },
+    ])
+  })
+
   it("長すぎる文はラベルにしない", () => {
     expect(parseItems("何か皆様の家具やインテリア探しのお役に立てたら嬉しいですというとても長い文章です\nhttps://a.r10.to/x")).toEqual([])
   })

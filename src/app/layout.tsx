@@ -32,8 +32,8 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      {/* スマホは下に浮かぶタブバーの分だけ下を空ける */}
-      <body className="min-h-full flex flex-col pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
+      {/* スマホは下のタブバーの分だけ下を空ける */}
+      <body className="min-h-full flex flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <Suspense fallback={null}>
           <NavProgress />
         </Suspense>

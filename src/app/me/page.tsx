@@ -5,6 +5,7 @@ import { SiteHeader } from "../_components/SiteHeader"
 import { LargeTitle } from "../_components/LargeTitle"
 import { signOut } from "../_components/actions"
 import { GenreDelete } from "../_components/GenreDelete"
+import { ThemeRow } from "../_components/Theme"
 
 export const metadata: Metadata = { title: "マイページ | Specify" }
 
@@ -61,6 +62,10 @@ export default async function MyPage() {
                 <span className="min-w-0 truncate">{user.email}</span>
                 <span className="shrink-0 text-[0.8125rem] text-on-surface-variant">ログイン中</span>
               </div>
+            </div>
+
+            <div className={group}>
+              <ThemeRow />
             </div>
 
             {!!genres?.length && (

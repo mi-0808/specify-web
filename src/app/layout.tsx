@@ -19,13 +19,19 @@ export const viewport: Viewport = {
   ],
 };
 
+// 色を塗る前に <html data-theme> を決める（ちらつかないように）。保存がなければ端末の設定に合わせ、端末側の切り替えにもついていく
+const themeScript = `(function(){var m=matchMedia("(prefers-color-scheme: dark)");function a(){var t;try{t=localStorage.getItem("theme")}catch(e){}document.documentElement.dataset.theme=t==="light"||t==="dark"?t:m.matches?"dark":"light"}a();m.addEventListener("change",a);window.applyTheme=a})()`
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="h-full antialiased">
+    <html lang="ja" className="h-full antialiased" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       {/* スマホは下のタブバーの分だけ下を空ける */}
       <body className="min-h-full flex flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <Suspense fallback={null}>

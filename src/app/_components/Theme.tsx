@@ -38,6 +38,8 @@ export function ThemeRow() {
       </span>
       <span className="flex-1">テーマ</span>
       <span className="text-on-surface-variant">{theme && (theme === "dark" ? "ダーク" : "ライト")}</span>
+      {/* ジャンルの行と同じ「›」で、押せる行だとわかるようにする */}
+      <span aria-hidden="true" className="text-on-surface-variant">›</span>
     </button>
   )
 }

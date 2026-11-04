@@ -21,12 +21,13 @@ const TABS = [
   { href: "/me", label: "マイページ", icon: "user", match: (p: string) => p.startsWith("/me") || p.startsWith("/login") },
 ] as const
 
-// スマホだけ、画面の下にすりガラスのタブバーを出す（パソコンは上のヘッダーのまま）
+// スマホだけ、画面の下に浮かぶすりガラスのカプセルを出す（パソコンは上のヘッダーのまま）
 export function TabBar() {
   const pathname = usePathname()
   return (
-    <nav aria-label="メインメニュー" className="glass fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant/60 pb-[env(safe-area-inset-bottom)] md:hidden">
-      <ul className="mx-auto flex max-w-md justify-around">
+    <nav aria-label="メインメニュー" className="glass soft-card fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto max-w-md rounded-full border border-outline-variant/60 p-1 md:hidden">
+      {/* 3等分にして、文字の長さでボタンの位置がずれないようにする */}
+      <ul className="grid grid-cols-3">
         {TABS.map((t) => {
           const active = t.match(pathname)
           return (
@@ -34,11 +35,11 @@ export function TabBar() {
               <Link
                 href={t.href}
                 aria-current={active ? "page" : undefined}
-                className={`focus-ring flex min-h-12 min-w-16 flex-col items-center justify-center gap-0.5 rounded-xl px-3 pt-1 text-[0.625rem] font-medium ${
-                  active ? "tab-lit text-primary" : "text-on-surface-variant"
+                className={`focus-ring flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] font-medium ${
+                  active ? "bg-primary-container text-on-primary-container" : "text-on-surface-variant"
                 }`}
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill={active && t.icon === "bookmark" ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[1.375rem]" fill={active && t.icon === "bookmark" ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   {ICONS[t.icon]}
                 </svg>
                 {t.label}

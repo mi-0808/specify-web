@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation"
 import { createClient, getUser } from "@/lib/supabase/server"
-import { shopName } from "@/lib/collector/shops"
+import { shopName, SHOP_HOSTS } from "@/lib/collector/shops"
+import { isAdmin } from "@/lib/admin"
 import { SiteHeader } from "../../_components/SiteHeader"
 import { SaveButton } from "./SaveButton"
 import { BackButton } from "./BackButton"
 import { RoomDelete } from "./RoomDelete"
+import { ItemAdd } from "./ItemAdd"
+import { deleteRoomItem } from "./actions"
 import Link from "next/link"
 
 type Props = { params: Promise<{ id: string }> }
@@ -18,7 +21,7 @@ async function loadRoom(id: string) {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from("rooms")
-    .select("id, title, channel_id, channel_title, genres(id, name, created_by), room_items(position, label, url, shop_host, product_title, image_url)")
+    .select("id, title, channel_id, channel_title, genres(id, name, created_by), room_items(position, label, url, shop_host, product_title, image_url, source, added_by)")
     .eq("id", id)
     .order("position", { referencedTable: "room_items" })
     .maybeSingle()
@@ -44,6 +47,10 @@ export default async function RoomPage({ params }: Props) {
   const genre = room.genres
   // 消せるのは、部屋が入っているジャンルを作った本人だけ（公式ジャンルとジャンルなしの部屋は誰も消せない。RLS でも守っている）
   const deletable = !!user && !!genre?.created_by && genre.created_by === user.id
+  // 人が足した家具は、足した本人と管理者が消せる
+  const admin = isAdmin(user?.email)
+  const canDeleteItem = (item: { source: string; added_by: string | null }) =>
+    item.source === "manual" && !!user && (admin || item.added_by === user.id)
 
   return (
     <main className="min-h-screen bg-surface text-on-surface">
@@ -100,7 +107,7 @@ export default async function RoomPage({ params }: Props) {
               この部屋の家具（{room.room_items.length}点）
             </h2>
             <p className="text-[0.8125rem] leading-[1.6] text-on-surface-variant">
-              動画の説明欄で紹介されているアイテムです。リンク先は、クリエイターが紹介しているページです。
+              動画の説明欄で紹介されているアイテムと、Specify のユーザーが追加したアイテムです。リンク先は、各ショップの商品ページです。
             </p>
           </div>
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -119,7 +126,14 @@ export default async function RoomPage({ params }: Props) {
                   )}
                 </div>
                 <div className="min-w-0 space-y-1">
-                  <p className="text-[0.8125rem] font-semibold text-on-surface-variant">{item.label}</p>
+                  <p className="flex flex-wrap items-center gap-1.5 text-[0.8125rem] font-semibold text-on-surface-variant">
+                    {item.label}
+                    {item.source === "manual" && (
+                      <span className="rounded-full bg-tertiary-container px-2 py-0.5 text-[0.75rem] font-semibold text-on-tertiary-container">
+                        ユーザーが追加
+                      </span>
+                    )}
+                  </p>
                   <p className="line-clamp-2 text-[0.9375rem] font-semibold leading-[1.5]">
                     {item.product_title ?? item.label}
                   </p>
@@ -131,11 +145,27 @@ export default async function RoomPage({ params }: Props) {
                   >
                     {shopName(item.shop_host)}で見る ↗<span className="sr-only">（新しいタブで開きます）</span>
                   </a>
+                  {canDeleteItem(item) && (
+                    <form action={deleteRoomItem} className="inline">
+                      <input type="hidden" name="roomId" value={room.id} />
+                      <input type="hidden" name="position" value={item.position} />
+                      <button type="submit" className="focus-ring ml-4 rounded py-1 text-[0.9375rem] text-error underline underline-offset-4">
+                        消す<span className="sr-only">（{item.label}）</span>
+                      </button>
+                    </form>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
           <p className="text-[0.8125rem] leading-[1.6] text-on-surface-variant">リンクには、広告（アフィリエイトリンク）が含まれます。</p>
+          {user ? (
+            <ItemAdd roomId={room.id} shops={[...new Set(Object.values(SHOP_HOSTS))]} />
+          ) : (
+            <Link href={`/login?next=/rooms/${room.id}`} className="focus-ring inline-block rounded text-[0.9375rem] text-primary underline underline-offset-4">
+              ログインして商品を追加
+            </Link>
+          )}
         </section>
       </div>
     </main>
